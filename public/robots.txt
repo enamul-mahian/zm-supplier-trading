@@ -1,0 +1,26 @@
+# ==============================================================================
+# ZM Supplier & Trading - Robots.txt
+# Technical SEO Crawl Control and Directory Security Rules (Part 07, Rule 22)
+# ==============================================================================
+
+User-agent: *
+
+# ১. স্পর্শকাতর অ্যাডমিন, লগইন এবং সিএমএস ইন্টারফেস ব্লক করা হলো
+Disallow: /admin/
+Disallow: /login
+
+# ২. ড্রাফট কন্টেন্ট এবং পাবলিশ হওয়ার আগের প্রিভিউ উইন্ডো ব্লক করা হলো
+Disallow: /preview/
+Disallow: /draft/
+
+# ৩. অতিরিক্ত প্যারামিটারযুক্ত ফিল্টার ও ইন্টারনাল সার্চ কুয়েরি ব্লক করা হলো (ইনডেক্স ব্লট এড়াতে)
+Disallow: /search
+Disallow: /search?*
+Disallow: /products?*&
+Disallow: /categories?*&
+
+# ৪. বাকি সমস্ত পাবলিক বিটুবি পেজ, সিএসএস, জেএস এবং মিডিয়া এসেট ক্রলিং করার অনুমতি
+Allow: /
+
+# ৫. গ্লোবাল এক্সএমএল সাইটম্যাপের পাথ ডিক্লেয়ারেশন (Part 07, Rule 21 & 44)
+Sitemap: https://zmsupplier.co.uk/sitemap.xml

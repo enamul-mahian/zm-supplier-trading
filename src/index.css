@@ -1,0 +1,96 @@
+/* গুগল ফন্ট ইমপোর্ট (Inter, Manrope, এবং Plus Jakarta Sans) */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Manrope:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    @apply bg-brand-bg text-brand-neutral-charcoal font-sans;
+  }
+
+  body {
+    @apply min-h-screen overflow-x-hidden flex flex-col;
+    /* iOS এবং অ্যানড্রয়েড সেফ-এরিয়া হ্যান্ডলিং */
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  /* ব্র্যান্ড হেডিং ফন্ট ফ্যামিলি গ্লোবাল সেটআপ */
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-heading tracking-tight text-brand-neutral-charcoal;
+  }
+
+  /* সকল ইন্টারেক্টিভ এলিমেন্টের জন্য স্মুথ ৩D-ইফেক্ট ও ট্রানজিশন ট্র্যাকিং */
+  button, input, select, textarea, a {
+    @apply transition-all duration-300 ease-in-out;
+  }
+
+  /* অ্যাক্সেসিবিলিটি (WCAG 2.1 AA) নিশ্চিত করার জন্য প্রিমিয়াম গ্লোবাল ফোকাস রিং */
+  :focus-visible {
+    @apply outline-none ring-2 ring-brand-primary ring-offset-2;
+  }
+}
+
+@layer components {
+  /* গ্লোবাল কন্টেইনার এবং লেআউট উইডথ কন্ট্রোল */
+  .premium-container {
+    @apply max-w-container mx-auto px-4 md:px-6 lg:px-8 w-full;
+  }
+
+  .premium-content-width {
+    @apply max-w-content mx-auto w-full;
+  }
+}
+
+@layer utilities {
+  /* সেফ এরিয়া প্যাডিং হেলপারস (notched screen ডিভাইসের জন্য) */
+  .pb-safe {
+    padding-bottom: calc(0.5rem + env(safe-area-inset-bottom));
+  }
+
+  .pt-safe {
+    padding-top: calc(0.5rem + env(safe-area-inset-top));
+  }
+
+  /* টেক্সট ব্যালেন্সিং হেলপার (হেডিং যেন দেখতে প্রিমিয়াম লাগে) */
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+/* ব্র্যান্ড কালারের সাথে সামঞ্জস্যপূর্ণ প্রিমিয়াম স্ক্রলবার কাস্টমাইজেশন */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #F8F9FA;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #C1D5CB; /* হালকা সবুজ টোন */
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #024E33; /* ব্র্যান্ডের প্রধান গাঢ় পান্না সবুজ */
+}
+
+/* অ্যাক্সেসিবিলিটি: ব্যবহারকারী ডিভাইসে Reduced Motion চালু রাখলে সিএসএস অ্যানিমেশন নিষ্ক্রিয় করা */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-delay: -1ms !important;
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    background-attachment: initial !important;
+    scroll-behavior: auto !important;
+    transition-delay: 0s !important;
+    transition-duration: 0s !important;
+  }
+}
