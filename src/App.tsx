@@ -29,7 +29,8 @@ import { ManageServices } from './pages/admin/ManageServices';
 import { ManageEnquiries } from './pages/admin/ManageEnquiries'; 
 import { ManageMessages } from './pages/admin/ManageMessages'; 
 import { ManageInsights } from './pages/admin/ManageInsights'; 
-import { ManageFAQs } from './pages/admin/ManageFAQs'; // নতুন রিয়েল এফএকিউ ম্যানেজার ইমপোর্ট
+import { ManageFAQs } from './pages/admin/ManageFAQs'; 
+import { ManageSettings } from './pages/admin/ManageSettings'; // নতুন রিয়েল সেটিংস ম্যানেজার ইমপোর্ট
 
 // স্ক্রল রিস্টোরেশন হেল্পার (পেজ চেঞ্জ হলে স্বয়ংক্রিয়ভাবে স্ক্রল একদম উপরে নিয়ে যাবে)
 const ScrollToTop: React.FC = () => {
@@ -122,7 +123,8 @@ const App: React.FC = () => {
             <Route path="enquiries" element={<ManageEnquiries />} />
             <Route path="messages" element={<ManageMessages />} /> 
             <Route path="insights" element={<ManageInsights />} /> 
-            <Route path="faqs" element={<ManageFAQs />} /> {/* পরিবর্তিত রাউট - ম্যাপ সাকসেস */}
+            <Route path="faqs" element={<ManageFAQs />} /> 
+            <Route path="settings" element={<ManageSettings />} /> {/* নতুন সেটিংস রাউট */}
           </Route>
           
           {/* ক্যাচ-অল ৪MD৪ নট ফাউন্ড রাউট */}

@@ -16,9 +16,11 @@ import {
   ShieldCheck, 
   Loader2,
   ChevronRight,
-  MessageSquare
+  MessageSquare,
+  ExternalLink, // নতুন আইকন ইমপোর্ট
+  BookOpen      // নতুন আইকন ইমপোর্ট
 } from 'lucide-react';
-import { BRAND_INFO } from '../../shared/constants'; // ইমপোর্ট যুক্ত করা হলো (টাইপ এরর ফিক্সড)
+import { BRAND_INFO } from '../../shared/constants';
 import toast from 'react-hot-toast';
 
 export const AdminLayout: React.FC = () => {
@@ -31,13 +33,12 @@ export const AdminLayout: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-  // ফায়ারস্টোর রোল-ভ্যালিডেশন লাইফসাইকেল (Part 05D, Rule 24-26)
+  // ফায়ারস্টোর রোল-ভ্যালিডেশন লাইফসাইকেল
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (currentUser) {
         setUser(currentUser);
         try {
-          // ফায়ারস্টোর থেকে ইউজারের রোল ফেচ করা
           const userDocRef = doc(db, 'users', currentUser.uid);
           const userDocSnap = await getDoc(userDocRef);
 
@@ -45,7 +46,6 @@ export const AdminLayout: React.FC = () => {
             const userData = userDocSnap.data();
             const userRole = userData.role;
 
-            // রোল পারমিশন চেক (Super Admin, Admin, বা Editor হলেই কেবল অ্যাক্সেস পাবে)
             if (userRole === 'super_admin' || userRole === 'admin' || userRole === 'editor') {
               setRole(userRole);
             } else {
@@ -56,8 +56,7 @@ export const AdminLayout: React.FC = () => {
               navigate('/admin/login');
             }
           } else if ((import.meta as any).env.DEV) {
-            // গ্রিনফিল্ড বুটস্ট্র্যাপ হেল্পার (লোকাল ডেভলপমেন্টে ডাটাবেস সম্পূর্ণ ফাঁকা থাকলে সাময়িক লগইন বাইপাস)
-            console.warn('[ZM Admin Bootstrap]: Greenfield dev mode detected. Granting temporary "super_admin" bypass for database setup.');
+            console.warn('[ZM Admin Bootstrap]: Greenfield dev mode detected. Granting temporary bypass.');
             setRole('super_admin');
           } else {
             toast.error('Account configuration missing. Please contact the Super Admin.');
@@ -84,12 +83,10 @@ export const AdminLayout: React.FC = () => {
     return () => unsubscribe();
   }, [navigate]);
 
-  // পেজ পরিবর্তনের সাথে সাথে মোবাইলে সাইডবার স্বয়ংক্রিয় বন্ধ করা
   useEffect(() => {
     setIsSidebarOpen(false);
   }, [location.pathname]);
 
-  // সাইন আউট বা লগআউট হ্যান্ডলার
   const handleLogout = async () => {
     try {
       await signOut(auth);
@@ -100,19 +97,20 @@ export const AdminLayout: React.FC = () => {
     }
   };
 
-  // একটিভ মেনু চেনার হেল্পার
   const isTabActive = (path: string) => location.pathname === path;
 
+  // আপডেট করা সম্পূর্ণ অ্যাডমিন মেনু (Insights এবং Settings যুক্ত করা হয়েছে)
   const adminMenu = [
     { label: 'Dashboard', path: '/admin/dashboard', icon: <LayoutDashboard className="w-4 h-4" /> },
     { label: 'Manage Products', path: '/admin/products', icon: <Package className="w-4 h-4" /> },
     { label: 'Manage Services', path: '/admin/services', icon: <FileText className="w-4 h-4" /> },
     { label: 'Quote Requests', path: '/admin/enquiries', icon: <FileText className="w-4 h-4 text-brand-accent-dark" /> },
     { label: 'Contact Messages', path: '/admin/messages', icon: <MessageSquare className="w-4 h-4" /> },
+    { label: 'Manage Insights', path: '/admin/insights', icon: <BookOpen className="w-4 h-4" /> },
     { label: 'Manage FAQs', path: '/admin/faqs', icon: <HelpCircle className="w-4 h-4" /> },
+    { label: 'Site Settings', path: '/admin/settings', icon: <Settings className="w-4 h-4" /> },
   ];
 
-  // ফুল পেজ রুট-লেভেল সিকিউরিটি চেকিং এবং প্রফেশনাল লোডিং স্টেপার
   if (loading) {
     return (
       <div className="min-h-screen bg-brand-bg-alt flex flex-col items-center justify-center">
@@ -124,17 +122,14 @@ export const AdminLayout: React.FC = () => {
     );
   }
 
-  if (!user || !role) {
-    return null; // অথেনটিকেশন বা রোল ভ্যালিডেশন ফেইল হলে রেন্ডারিং ব্লক থাকবে
-  }
+  if (!user || !role) return null;
 
   return (
     <div className="min-h-screen bg-brand-bg-alt flex relative text-left">
       
-      {/* ১. বাম পাশের ডেস্কটপ সাইডবার (Sidebar - Hides on Mobile) */}
+      {/* ১. ডেস্কটপ সাইডবার */}
       <aside className="hidden lg:flex flex-col w-[260px] bg-brand-secondary border-r border-brand-secondary-dark text-white p-5 justify-between shrink-0 h-screen sticky top-0">
         <div className="flex flex-col">
-          {/* লোগো ও সিকিউরিটি মার্ক */}
           <Link to="/" className="flex items-center space-x-2.5 pb-6 border-b border-brand-primary-light/10 mb-6">
             <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-brand-primary text-brand-accent font-heading font-extrabold text-lg border border-brand-primary-light">
               ZS
@@ -145,8 +140,7 @@ export const AdminLayout: React.FC = () => {
             </div>
           </Link>
 
-          {/* মেনু আইটেমসমূহ */}
-          <nav className="flex flex-col space-y-2">
+          <nav className="flex flex-col space-y-2 overflow-y-auto max-h-[60vh] pr-2 custom-scrollbar">
             {adminMenu.map((item) => (
               <Link
                 key={item.path}
@@ -167,7 +161,6 @@ export const AdminLayout: React.FC = () => {
           </nav>
         </div>
 
-        {/* সাইডবারের নিচের ইউজার আইডেন্টিটি ও লগআউট */}
         <div className="pt-6 border-t border-brand-primary-light/10 flex flex-col space-y-4">
           <div className="flex items-center space-x-3 px-2">
             <div className="w-8 h-8 rounded-full bg-brand-primary/20 flex items-center justify-center text-brand-accent text-xs font-bold border border-brand-primary-light/10 select-none">
@@ -194,7 +187,6 @@ export const AdminLayout: React.FC = () => {
         {/* অ্যাডমিন ওয়ার্কস্পেস টপ-বার */}
         <header className="bg-white border-b border-brand-neutral-border py-3 px-6 flex justify-between items-center sticky top-0 z-30 shadow-header">
           <div className="flex items-center space-x-3">
-            {/* মোবাইল সাইডবার টগল বাটন */}
             <button
               onClick={() => setIsSidebarOpen(true)}
               className="p-2 lg:hidden text-brand-neutral-dark hover:text-brand-primary rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-brand-primary"
@@ -208,21 +200,29 @@ export const AdminLayout: React.FC = () => {
             </span>
           </div>
 
-          <div className="hidden sm:flex items-center space-x-4 select-none">
-            <span className="text-xs font-bold text-brand-neutral-muted uppercase tracking-wide">
-              {BRAND_INFO.name}
-            </span>
+          {/* লাইভ সাইট দেখার বাটন যুক্ত করা হলো */}
+          <div className="flex items-center space-x-4">
+            <a 
+              href="/" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="flex items-center space-x-2 bg-brand-primary/5 text-brand-primary hover:bg-brand-primary hover:text-white transition-colors duration-300 text-xs font-bold px-4 py-2 rounded-lg border border-brand-primary/10"
+            >
+              <span className="hidden sm:inline">View Live Site</span>
+              <span className="sm:hidden">Live Site</span>
+              <ExternalLink className="w-3.5 h-3.5" />
+            </a>
           </div>
         </header>
 
-        {/* রাউট-অনুযায়ী নেস্টেড সাব-পেজ লোডিং উন্ডো */}
+        {/* রাউট-অনুযায়ী নেস্টেড সাব-পেজ লোডিং উইন্ডো */}
         <main className="flex-grow p-6 md:p-8 bg-brand-bg-alt overflow-y-auto">
           <Outlet />
         </main>
 
       </div>
 
-      {/* ৩. মোবাইল সাইডবার ওভারলে প্যানেল (Backdrop blurring + Body scroll locking) */}
+      {/* ৩. মোবাইল সাইডবার ওভারলে প্যানেল */}
       <div className={`fixed inset-0 z-40 lg:hidden transition-all duration-300 ${
         isSidebarOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
       }`}>
@@ -239,7 +239,7 @@ export const AdminLayout: React.FC = () => {
               </button>
             </div>
 
-            <nav className="flex flex-col space-y-2">
+            <nav className="flex flex-col space-y-2 overflow-y-auto max-h-[60vh] pr-2 custom-scrollbar">
               {adminMenu.map((item) => (
                 <Link
                   key={item.path}
