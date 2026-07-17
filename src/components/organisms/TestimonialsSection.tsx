@@ -61,9 +61,14 @@ export const TestimonialsSection: React.FC = () => {
       try {
         setLoading(true);
         const ref = collection(db, 'testimonials');
-        const q = query(ref, where('isEnabled', '==', true), orderBy('sortOrder', 'asc'));
+        // ফিক্স: orderBy রিমুভ করা হয়েছে ইনডেক্স এরর বাইপাস করার জন্য
+        const q = query(ref, where('isEnabled', '==', true));
         const snap = await getDocs(q);
         const list = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+        // ফিক্স: ক্লায়েন্ট-সাইডে sortOrder অনুযায়ী ডেটা সাজানো হচ্ছে
+        list.sort((a: any, b: any) => (a.sortOrder || 0) - (b.sortOrder || 0));
+
         if (list.length > 0) {
           setTestimonials(list);
         } else {
@@ -80,7 +85,7 @@ export const TestimonialsSection: React.FC = () => {
     loadTestimonials();
   }, []);
 
-  // অটোপ্লে হ্যান্ডলার (প্রতি ৬ সেকেন্ড পর পর অটোপ্লে হবে, তবে এটি খুবই সাবলীল - Part 03, Section 16)
+  // অটোপ্লে হ্যান্ডলার
   useEffect(() => {
     if (!autoplay || testimonials.length <= 1) return;
     const interval = setInterval(() => {
@@ -90,7 +95,7 @@ export const TestimonialsSection: React.FC = () => {
   }, [autoplay, testimonials.length]);
 
   const handlePrev = () => {
-    setAutoplay(false); // ম্যানুয়াল নেভিগেশনে অটোপ্লে সাময়িক অফ করা
+    setAutoplay(false);
     setActiveIndex((prev) => (prev - 1 + testimonials.length) % testimonials.length);
   };
 
@@ -105,14 +110,12 @@ export const TestimonialsSection: React.FC = () => {
   };
 
   return (
-    <section className="py-16 md:py-24 bg-white text-left relative overflow-hidden border-b border-brand-neutral-border">
+    <section className="home-section bg-white text-left relative overflow-hidden border-b border-brand-neutral-border">
       
-      {/* ব্যাকগ্রাউন্ড গোল্ডেন ফ্লেয়ার */}
       <div className="absolute top-0 right-1/4 w-[400px] h-[400px] rounded-full bg-brand-accent/5 blur-[100px] pointer-events-none" />
 
       <div className="premium-container">
         
-        {/* সেকশন হেডার */}
         <div className="max-w-xl mb-12 lg:mb-16">
           <span className="text-brand-primary font-heading font-extrabold text-xs tracking-wider uppercase mb-3 inline-block flex items-center gap-1.5">
             <Sparkles className="w-3.5 h-3.5 text-brand-accent" />
@@ -124,20 +127,16 @@ export const TestimonialsSection: React.FC = () => {
         </div>
 
         {loading ? (
-          // স্কেলেটন প্লেসহোল্ডার
           <div className="bg-brand-bg-alt rounded-card border border-brand-neutral-border p-8 h-[340px] animate-pulse" />
         ) : (
-          /* মেইন স্লাইডার গ্রিড (ডেস্কটপে ডাবল কলাম - বামে টেক্সট কোট, ডানে কার্গো ট্রাক) */
           <div 
             className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center bg-brand-bg-alt rounded-card border border-brand-neutral-border p-6 sm:p-8 lg:p-10 relative"
-            onMouseEnter={() => setAutoplay(false)} // মাউস হোভার করলে অটোপ্লে পজ হবে (Part 03, Section 16)
-            onMouseLeave={() => setAutoplay(true)}  // মাউস সরিয়ে নিলে অটোপ্লে আবার সচল হবে
+            onMouseEnter={() => setAutoplay(false)} 
+            onMouseLeave={() => setAutoplay(true)}
           >
             
-            {/* বাম কলাম: প্রশংসাপত্র ব্লক (ডেস্কটপে ৭ কলাম) */}
             <div className="lg:col-span-7 flex flex-col justify-between h-full min-h-[260px] sm:min-h-[220px]">
               
-              {/* কোট আইকন এবং ডাইনামিক স্লাইড এরিয়া */}
               <div className="relative">
                 <Quote className="w-12 h-12 text-brand-primary/10 absolute -top-4 -left-2 rotate-180" />
                 
@@ -157,9 +156,7 @@ export const TestimonialsSection: React.FC = () => {
                 </div>
               </div>
 
-              {/* ক্লায়েন্ট আইডেন্টিটি এবং স্লাইড কন্ট্রোলস */}
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-6 mt-8 pl-6">
-                {/* ক্লায়েন্ট নাম, পদবী ও দেশ */}
                 <div>
                   <h3 className="font-heading font-bold text-base text-brand-neutral-charcoal leading-none mb-1.5">
                     {testimonials[activeIndex]?.clientName}
@@ -169,10 +166,8 @@ export const TestimonialsSection: React.FC = () => {
                   </p>
                 </div>
 
-                {/* ম্যানুয়াল স্লাইড ও ডট কন্ট্রোলস (WCAG 2.1 AA অ্যাক্সেসিবিলিটি সহ) */}
                 <div className="flex items-center space-x-4">
                   
-                  {/* প্রিভিয়াস বাটন */}
                   <button
                     onClick={handlePrev}
                     className="p-2 rounded-lg bg-brand-surface border border-brand-neutral-border text-brand-neutral-charcoal hover:bg-brand-primary hover:text-brand-accent hover:shadow-soft transition-all duration-300"
@@ -181,7 +176,6 @@ export const TestimonialsSection: React.FC = () => {
                     <ChevronLeft className="w-4 h-4" />
                   </button>
 
-                  {/* স্লাইড ডটস ইন্ডিকেটর */}
                   <div className="flex space-x-1.5">
                     {testimonials.map((_, idx) => (
                       <button
@@ -196,7 +190,6 @@ export const TestimonialsSection: React.FC = () => {
                     ))}
                   </div>
 
-                  {/* নেক্সট বাটন */}
                   <button
                     onClick={handleNext}
                     className="p-2 rounded-lg bg-brand-surface border border-brand-neutral-border text-brand-neutral-charcoal hover:bg-brand-primary hover:text-brand-accent hover:shadow-soft transition-all duration-300"
@@ -209,7 +202,6 @@ export const TestimonialsSection: React.FC = () => {
               </div>
             </div>
 
-            {/* ডান কলাম: অপ্টিমাইজড কার্গো ট্রাক ইমেজ প্যানেল (ডেস্কটপে ৫ কলাম) */}
             <div className="lg:col-span-5 w-full h-[240px] sm:h-[280px] lg:h-[300px] rounded-card overflow-hidden shadow-soft border border-brand-neutral-border relative group">
               <img 
                 src={defaultCargoTruckImage} 
