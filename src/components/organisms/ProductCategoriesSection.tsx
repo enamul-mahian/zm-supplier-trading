@@ -3,7 +3,6 @@ import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { Sparkles, ArrowRight, Package } from 'lucide-react';
 import { fetchCategories } from '../../services/firestore';
-import { ProductCategory } from '../../shared/types';
 import { Button } from '../atoms/Button';
 
 // মোশন অ্যানিমেশন ভ্যারিয়েন্টস
@@ -74,7 +73,7 @@ const FALLBACK_CATEGORIES = [
   },
 ];
 
-// স্কেলেটন পালস লোডার (CLS প্রতিরোধ করার জন্য - Part 03, Section 28)
+// স্কেলেটন পালস লোডার (CLS প্রতিরোধ করার জন্য)
 const CategorySkeleton: React.FC = () => (
   <div className="bg-brand-surface rounded-card border border-brand-neutral-border shadow-soft h-[360px] animate-pulse overflow-hidden flex flex-col justify-between">
     <div className="w-full h-44 bg-brand-neutral-gray" />
@@ -100,7 +99,6 @@ export const ProductCategoriesSection: React.FC = () => {
         setLoading(true);
         const data = await fetchCategories();
         if (data && data.length > 0) {
-          // ক্যাটালগ সেকশনের ফ্লো অনুযায়ী ৪টি প্রধান ক্যাটাগরি স্লাইড করা হচ্ছে
           setCategories(data.slice(0, 4));
         } else {
           setCategories(FALLBACK_CATEGORIES);
@@ -117,14 +115,13 @@ export const ProductCategoriesSection: React.FC = () => {
   }, []);
 
   return (
-    <section className="py-16 md:py-24 bg-white text-left relative overflow-hidden border-b border-brand-neutral-border">
+    // ফিক্স: গ্লোবাল `.home-section` ক্লাসটি ব্যবহার করা হয়েছে অতিরিক্ত গ্যাপ কমানোর জন্য
+    <section className="home-section bg-white text-left relative overflow-hidden border-b border-brand-neutral-border">
       
-      {/* ব্যাকগ্রাউন্ডে কাস্টম পান্না সবুজ ফ্লেয়ার */}
       <div className="absolute top-0 right-0 w-[400px] h-[400px] rounded-full bg-brand-primary/5 blur-[100px] pointer-events-none" />
 
       <div className="premium-container">
         
-        {/* সেকশন হেডার কন্টেইনার */}
         <div className="max-w-xl mb-12 lg:mb-16">
           <span className="text-brand-primary font-heading font-extrabold text-xs tracking-wider uppercase mb-3 inline-block flex items-center gap-1.5">
             <Sparkles className="w-3.5 h-3.5 text-brand-accent" />
@@ -138,9 +135,7 @@ export const ProductCategoriesSection: React.FC = () => {
           </p>
         </div>
 
-        {/* ক্যাটাগরি গ্রিড রেন্ডারার */}
         {loading ? (
-          // ১. প্রথম রেন্ডারে ৪-কলামের প্লেসহোল্ডার স্কেলেটন লোড
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             <CategorySkeleton />
             <CategorySkeleton />
@@ -148,7 +143,6 @@ export const ProductCategoriesSection: React.FC = () => {
             <CategorySkeleton />
           </div>
         ) : (
-          // ২. ডেটা লোড সম্পন্ন হলে মেইন রেসপন্সিভ গ্রিড
           <motion.div 
             className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"
             variants={containerVariants}
@@ -162,7 +156,6 @@ export const ProductCategoriesSection: React.FC = () => {
                 className="bg-brand-surface rounded-card border border-brand-neutral-border shadow-soft hover:shadow-premium hover:-translate-y-1.5 transition-all duration-300 overflow-hidden flex flex-col justify-between h-full group"
                 variants={cardVariants}
               >
-                {/* ক্যাটাগরি ইমেজ ব্লক (Part 02 - border radius '20px'/'rounded-card' এর সাথে মিল রেখে কাস্টমাইজড ক্রপ) */}
                 <div className="w-full h-44 overflow-hidden relative border-b border-brand-neutral-border">
                   <img 
                     src={category.cardImage?.secureUrl || 'https://placehold.co/600x400/024e33/ffffff?text=Product+Category'} 
@@ -170,14 +163,12 @@ export const ProductCategoriesSection: React.FC = () => {
                     className="w-full h-full object-cover transition-transform duration-[4000ms] group-hover:scale-105"
                     loading="lazy"
                   />
-                  {/* কাস্টম ক্যাটাগরি ব্যাজ বা আইকন ফ্ল্যাগ */}
                   <div className="absolute top-3 left-3 bg-brand-secondary/90 backdrop-blur-sm text-brand-accent text-[9px] font-extrabold tracking-wider uppercase px-2.5 py-1 rounded-md shadow-soft border border-brand-primary-light flex items-center gap-1">
                     <Package className="w-3 h-3" />
                     <span>Wholesale</span>
                   </div>
                 </div>
 
-                {/* ক্যাটাগরি ডেসক্রিপশন কন্টেইনার */}
                 <div className="p-5 flex-grow flex flex-col justify-between text-left">
                   <div>
                     <h3 className="font-heading font-bold text-base text-brand-neutral-charcoal mb-2 group-hover:text-brand-primary transition-colors duration-300">
@@ -188,16 +179,15 @@ export const ProductCategoriesSection: React.FC = () => {
                     </p>
                   </div>
 
-                  {/* ক্যাটাগরি ভিত্তিক MOQ সতর্কবার্তা */}
                   <div className="mt-4 flex items-center justify-between text-[11px] font-bold text-brand-neutral-charcoal bg-brand-bg-alt/80 px-3 py-1.5 rounded-lg border border-brand-neutral-border">
                     <span>MOQ: Sourcing Specific</span>
                     <span className="text-brand-primary">Clean presentation</span>
                   </div>
 
-                  {/* "View Category" অ্যাকশন বাটন লিঙ্ক (ডায়নামিক স্লাগ দিয়ে লিঙ্কিং - Part 04) */}
+                  {/* ফিক্স: Explore Category লিঙ্কটি এখন Products পেজের ক্যাটাগরি ফিল্টার প্যারামিটার সহ ডাইরেক্ট করা হয়েছে */}
                   <div className="mt-5 pt-4 border-t border-brand-neutral-border/50">
                     <Link 
-                      to={`/categories/${category.slug}`}
+                      to={`/products?category=${encodeURIComponent(category.name)}`}
                       className="inline-flex items-center text-xs font-bold text-brand-primary tracking-wider uppercase group-hover:text-brand-accent-dark transition-colors duration-300"
                     >
                       <span>Explore Category</span>
@@ -210,7 +200,6 @@ export const ProductCategoriesSection: React.FC = () => {
           </motion.div>
         )}
 
-        {/* গ্লোবাল সিটিএ বাটন ক্যাটালগ ডিরেক্টরির জন্য */}
         <div className="mt-12 text-center">
           <Button to="/products" variant="primary" size="md">
             View All Products

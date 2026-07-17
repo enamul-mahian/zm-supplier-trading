@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom'; // ফিক্স: useSearchParams ইমপোর্ট করা হলো
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, Sparkles, ArrowRight, Package, ShieldCheck, ChevronDown } from 'lucide-react';
-import { fetchProducts } from '../services/firestore';
+import { fetchProducts, fetchCategories } from '../services/firestore'; // ফিক্স: fetchCategories ইমপোর্ট করা হলো
 import { BRAND_INFO } from '../shared/constants';
 import { Button } from '../components/atoms/Button';
 import { Input } from '../components/atoms/Input';
@@ -49,7 +49,7 @@ const FALLBACK_PRODUCTS = [
   { id: 'p12', name: 'Packaging Items', category: 'Packaging', slug: 'packaging-items', desc: 'Hygienic disposables, biodegradable boxes, and B2B packaging supplies.', image: 'https://images.unsplash.com/photo-1530587191325-3db32d826c18?auto=format&fit=crop&q=80&w=400', moq: '100 Cartons', pkg: 'Cartons' }
 ];
 
-// পালস স্কেলেটন প্লেসহোল্ডার (CLS ও লাইটহাউস স্কোর বজায় রাখার জন্য)
+// পালস স্কেলেটন প্লেসহোল্ডার
 const ProductSkeleton: React.FC = () => (
   <div className="bg-brand-surface rounded-card border border-brand-neutral-border p-5 h-[420px] animate-pulse overflow-hidden flex flex-col justify-between">
     <div className="w-full h-44 bg-brand-neutral-gray rounded-xl" />
@@ -68,45 +68,69 @@ const ProductSkeleton: React.FC = () => (
 export const Products: React.FC = () => {
   const [products, setProducts] = useState<any[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<any[]>([]);
+  const [categories, setCategories] = useState<string[]>(['All Products']); // ডায়নামিক ক্যাটাগরি স্টেট
   const [loading, setLoading] = useState(true);
 
   // ফিল্টার ও সার্চ স্টেট
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('All Products');
   const [sortBy, setSortBy] = useState('Featured');
+  const [searchParams] = useSearchParams(); // URL প্যারামিটার রিড করার হুক
 
-  const tabs = ['All Products', 'Food Products', 'Beverages', 'Dry Goods', 'Packaging'];
-
-  // ফায়ারস্টোর থেকে প্রোডাক্ট ফেচিং
+  // ফায়ারস্টোর থেকে প্রোডাক্ট এবং ক্যাটাগরি ফেচিং
   useEffect(() => {
-    const loadProducts = async () => {
+    const loadData = async () => {
       try {
         setLoading(true);
-        const data = await fetchProducts();
-        if (data && data.products.length > 0) {
-          setProducts(data.products);
+        const [productsData, categoriesData] = await Promise.all([
+          fetchProducts(),
+          fetchCategories()
+        ]);
+
+        if (productsData && productsData.products.length > 0) {
+          setProducts(productsData.products);
         } else {
           setProducts(FALLBACK_PRODUCTS);
         }
+
+        if (categoriesData && categoriesData.length > 0) {
+          setCategories(['All Products', ...categoriesData.map(c => c.name)]);
+        } else {
+          setCategories(['All Products', 'Packaged Foods', 'Beverages', 'Dry Goods', 'Hospitality Supplies']);
+        }
       } catch (error) {
-        console.error('[Products fetch error]:', error);
+        console.error('[Products page load error]:', error);
         setProducts(FALLBACK_PRODUCTS);
+        setCategories(['All Products', 'Packaged Foods', 'Beverages', 'Dry Goods', 'Hospitality Supplies']);
       } finally {
         setLoading(false);
       }
     };
 
-    loadProducts();
+    loadData();
   }, []);
+
+  // ইউআরএল ক্যাটাগরি কুয়েরি প্যারামিটার হ্যান্ডলার (URL সিঙ্ক)
+  useEffect(() => {
+    const categoryParam = searchParams.get('category');
+    if (categoryParam) {
+      const matchedTab = categories.find(
+        cat => cat.toLowerCase() === categoryParam.toLowerCase()
+      );
+      if (matchedTab) {
+        setActiveTab(matchedTab);
+      }
+    }
+  }, [searchParams, categories]);
 
   // সার্চ, ট্যাব ফিল্টারিং এবং সর্টিং লজিক (রিয়েল-টাইম ক্লায়েন্ট সাইড সিঙ্ক)
   useEffect(() => {
     let result = [...products];
 
-    // ১. ক্যাটাগরি ট্যাব ফিল্টার
+    // ১. ক্যাটাগরি ট্যাব ফিল্টার (ডায়নামিক ক্যাটাগরি ম্যাচিং)
     if (activeTab !== 'All Products') {
       result = result.filter(
-        product => product.category?.toLowerCase() === activeTab.replace(' Products', '').toLowerCase()
+        product => product.category?.toLowerCase() === activeTab.toLowerCase()
       );
     }
 
@@ -133,7 +157,6 @@ export const Products: React.FC = () => {
 
   return (
     <>
-      {/* গ্লোবাল এবং ক্যাটাগরি স্পেসিফিক এসইও মেটা ট্যাগস (Part 07, Rule 06) */}
       <Helmet>
         <title>Our Products | {BRAND_INFO.name} | B2B Catalogue</title>
         <meta name="description" content="Browse our premium UK-standard B2B product catalogue including Basmati rice, flours, pulses, cooking oils, beverages, and industrial packaging supplies." />
@@ -170,7 +193,7 @@ export const Products: React.FC = () => {
           <div className="premium-container px-4">
             <div className="flex flex-col md:flex-row gap-4 justify-between items-stretch md:items-center">
               
-              {/* সার্চ ইনপুট (Atoms Input ব্যবহার করা হয়েছে) */}
+              {/* সার্চ ইনপুট */}
               <div className="w-full md:w-80">
                 <Input
                   placeholder="Search products..."
@@ -199,9 +222,9 @@ export const Products: React.FC = () => {
 
             </div>
 
-            {/* ৫ নম্বর পেজ ইমেজ অনুযায়ী হুবহু ট্যাব লেআউট */}
+            {/* ডায়নামিক ক্যাটাগরি ট্যাব */}
             <div className="flex flex-wrap items-center gap-2 mt-6 pb-2 border-t border-brand-neutral-border/50 pt-6">
-              {tabs.map((tab) => (
+              {categories.map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
@@ -223,7 +246,6 @@ export const Products: React.FC = () => {
           <div className="premium-container px-4">
             
             {loading ? (
-              // ১. ডেটাবেস লোডিং থাকা অবস্থায় স্কেলেটন গ্রিড
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                 <ProductSkeleton />
                 <ProductSkeleton />
@@ -231,7 +253,6 @@ export const Products: React.FC = () => {
                 <ProductSkeleton />
               </div>
             ) : filteredProducts.length > 0 ? (
-              // ২. সফলভাবে ফিল্টার হওয়া প্রোডাক্ট গ্রিড (৫ নম্বর পেজের মতো ৪ কলাম - Part 05B, Rule 22)
               <motion.div 
                 className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"
                 variants={containerVariants}
@@ -245,7 +266,6 @@ export const Products: React.FC = () => {
                     className="bg-brand-surface rounded-card border border-brand-neutral-border shadow-soft hover:shadow-premium hover:-translate-y-1.5 transition-all duration-300 overflow-hidden flex flex-col justify-between h-full group"
                     variants={cardVariants}
                   >
-                    {/* প্রোডাক্ট ইমেজ ক্রপ (border radius '20px') */}
                     <div className="w-full h-44 overflow-hidden relative border-b border-brand-neutral-border bg-brand-neutral-gray">
                       <img 
                         src={product.image || product.primaryImage?.secureUrl || 'https://placehold.co/400x300/024e33/ffffff?text=ZM+Product'} 
@@ -253,13 +273,11 @@ export const Products: React.FC = () => {
                         className="w-full h-full object-cover transition-transform duration-[4000ms] group-hover:scale-105"
                         loading="lazy"
                       />
-                      {/* ক্যাটাগরি ব্যাজ */}
                       <span className="absolute top-3 left-3 bg-brand-secondary/90 backdrop-blur-sm text-brand-accent text-[9px] font-extrabold tracking-wider uppercase px-2 py-0.5 rounded-md border border-brand-primary-light">
                         {product.category}
                       </span>
                     </div>
 
-                    {/* প্রোডাক্ট বিবরণী */}
                     <div className="p-5 flex-grow flex flex-col justify-between text-left">
                       <div>
                         <h3 className="font-heading font-bold text-base text-brand-neutral-charcoal mb-2 line-clamp-1 group-hover:text-brand-primary transition-colors duration-300">
@@ -269,7 +287,6 @@ export const Products: React.FC = () => {
                           {product.desc || product.shortDescription}
                         </p>
                         
-                        {/* B2B স্পেসিফিকেশন হাইলাইটস (Part 05A, Rule 23) */}
                         <div className="mt-4 flex flex-col space-y-1.5 text-[11px] font-bold text-brand-neutral-charcoal">
                           <div className="flex justify-between border-b border-brand-neutral-border/50 pb-1">
                             <span className="text-brand-neutral-muted uppercase">Min Order:</span>
@@ -282,12 +299,10 @@ export const Products: React.FC = () => {
                         </div>
                       </div>
 
-                      {/* গোল্ডেন প্রাইসিং ব্যাজ ("Price on Request" - Part 05B, Rule 15) */}
                       <div className="mt-4 bg-brand-accent/5 border border-brand-accent/25 text-brand-primary text-xs font-bold text-center py-2 rounded-lg select-none">
                         Price Available on Request
                       </div>
 
-                      {/* অ্যাকশন বাটন গ্রুপ (View Details এবং Pre-filled Quote - Part 05A, Rule 25) */}
                       <div className="grid grid-cols-2 gap-2 mt-4 pt-4 border-t border-brand-neutral-border/50">
                         <Link 
                           to={`/products/${product.slug}`}
@@ -295,7 +310,6 @@ export const Products: React.FC = () => {
                         >
                           Details
                         </Link>
-                        {/* Quote পেইজে স্বয়ংক্রিয়ভাবে প্রোডাক্ট স্লাগ ফিল্ড পাস করা হবে */}
                         <Link 
                           to={`/request-quote?product=${product.slug}`}
                           className="w-full flex items-center justify-center bg-brand-primary text-white text-xs font-bold py-2 rounded-lg hover:bg-brand-primary-dark transition-colors duration-300"
@@ -308,7 +322,6 @@ export const Products: React.FC = () => {
                 ))}
               </motion.div>
             ) : (
-              // ৩. সার্চ কুয়েরিতে কোনো ফলাফল না মিললে কাস্টম সোর্সিং অফার (Empty State - Part 05A, Rule 33/34)
               <div className="max-w-md mx-auto text-center py-12 flex flex-col items-center">
                 <div className="w-14 h-14 bg-brand-primary/5 rounded-full flex items-center justify-center mb-4 border border-brand-primary/10">
                   <Package className="w-6 h-6 text-brand-primary" />
@@ -328,7 +341,6 @@ export const Products: React.FC = () => {
           </div>
         </section>
 
-        {/* ৭. গ্লোবাল বিটুবি ইনকোয়ারি সিটিএ প্যানেল (রিসাইক্লিং) */}
         <InquiryCTASection />
 
       </div>
