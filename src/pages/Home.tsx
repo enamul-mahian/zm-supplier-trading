@@ -83,7 +83,8 @@ export const Home: React.FC = () => {
       </Helmet>
 
       {/* ২. প্রথম পেজের ২০-ধাপের কাস্টম লেআউট ফ্লো এবং এলাইনমেন্ট (Part 03, Section 02) */}
-      <div className="w-full flex flex-col">
+      {/* ফিক্স: space-y ক্লাস যুক্ত করে গ্লোবাল স্পেসিং কন্ট্রোল করা হলো */}
+      <div className="w-full flex flex-col space-y-16 md:space-y-24 lg:space-y-32">
         {/* ধাপ ০৩: হিরো সেকশন */}
         <Hero />
 

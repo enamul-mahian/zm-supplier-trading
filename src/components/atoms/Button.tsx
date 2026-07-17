@@ -17,7 +17,7 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
 // অ্যাক্সেসিবিলিটি ফ্রেন্ডলি সিএসএস লোডিং স্পিনার কম্পোনেন্ট
 const LoadingSpinner: React.FC = () => (
   <svg 
-    className="animate-spin -ml-1 mr-2.5 h-4 w-4 text-current" 
+    className="animate-spin h-5 w-5 text-current" 
     fill="none" 
     viewBox="0 0 24 24"
     aria-hidden="true"
@@ -54,13 +54,12 @@ export const Button: React.FC<ButtonProps> = ({
   type = 'button',
   ...rest
 }) => {
-  // ডিজাইন টোকেন ও থিম কালার সিঙ্ক করে সিএসএস ক্লাসের সমন্বয়
   const baseStyle = 'inline-flex items-center justify-center font-heading font-semibold transition-all duration-300 rounded-btn focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none active:scale-[0.98]';
   
   const variants = {
     primary: 'bg-brand-primary text-white hover:bg-brand-primary-dark shadow-soft hover:shadow-premium focus-visible:ring-brand-primary',
     secondary: 'bg-brand-secondary text-white hover:bg-brand-secondary-dark shadow-soft focus-visible:ring-brand-secondary',
-    outline: 'border border-brand-primary text-brand-primary hover:bg-brand-primary/5 focus-visible:ring-brand-primary',
+    outline: 'border border-brand-primary text-brand-primary hover:bg-brand-primary hover:text-white focus-visible:ring-brand-primary',
     ghost: 'text-brand-primary hover:bg-brand-primary/5 focus-visible:ring-brand-primary',
     danger: 'bg-red-600 text-white hover:bg-red-700 focus-visible:ring-red-600',
     success: 'bg-green-600 text-white hover:bg-green-700 focus-visible:ring-green-600',
@@ -69,32 +68,29 @@ export const Button: React.FC<ButtonProps> = ({
   };
 
   const sizes = {
-    sm: 'text-xs px-3.5 py-1.5 h-9',
-    md: 'text-sm px-5 py-2.5 h-11',
-    lg: 'text-base px-7 py-3.5 h-[52px]',
+    sm: 'px-4 py-2 text-xs',
+    md: 'px-5 py-2.5 text-sm',
+    lg: 'px-7 py-3.5 text-base',
   };
 
   const widthStyle = fullWidth ? 'w-full' : 'w-auto';
   
-  // সবগুলো ক্লাসের সমন্বয়
   const combinedClasses = `${baseStyle} ${variants[variant]} ${sizes[size]} ${widthStyle} ${className}`.trim();
 
-  // বাটনের ভেতরের কন্টেন্ট রেন্ডার লজিক (লোডিং মেকানিজম এবং আইকন পজিশনিং সহ)
   const renderContent = () => (
     <>
       {isLoading ? (
         <LoadingSpinner />
       ) : (
-        leftIcon && <span className="mr-2 inline-flex items-center justify-center" aria-hidden="true">{leftIcon}</span>
+        leftIcon && <span className="-ml-1 mr-2 flex-shrink-0" aria-hidden="true">{leftIcon}</span>
       )}
-      <span>{children}</span>
+      <span className="truncate">{children}</span>
       {!isLoading && rightIcon && (
-        <span className="ml-2 inline-flex items-center justify-center" aria-hidden="true">{rightIcon}</span>
+        <span className="ml-2 -mr-1 flex-shrink-0" aria-hidden="true">{rightIcon}</span>
       )}
     </>
   );
 
-  // ১. যদি রিয়্যাক্ট রাউটারের ইন্টারনাল লিঙ্ক (to) প্রোপস থাকে
   if (to) {
     return (
       <Link 
@@ -107,7 +103,6 @@ export const Button: React.FC<ButtonProps> = ({
     );
   }
 
-  // ২. যদি সাধারণ বা এক্সটার্নাল এংকর লিঙ্ক (href) প্রোপস থাকে
   if (href) {
     return (
       <a
@@ -122,7 +117,6 @@ export const Button: React.FC<ButtonProps> = ({
     );
   }
 
-  // ৩. সাধারণ এন্ট্রি বা ফর্ম সাবমিশন বাটন রেন্ডার
   return (
     <button
       type={type}
