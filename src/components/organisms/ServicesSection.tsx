@@ -39,7 +39,6 @@ const cardVariants = {
   },
 };
 
-// ফায়ারস্টোর ডেটাবেস সম্পূর্ণ খালি বা লোড হতে দেরি হলে বায়ারের জন্য ১ নম্বর পেজ প্রিভিউ অনুযায়ী ১০০% আসল ফলব্যাক ডাটা
 const FALLBACK_SERVICES = [
   {
     id: 'sourcing',
@@ -85,8 +84,7 @@ const FALLBACK_SERVICES = [
   },
 ];
 
-// ডায়নামিক আইকন ট্র্যাকার হেল্পার
-// ফিক্স: আইকন থেকে text-brand-primary রিমুভ করা হয়েছে হোভার কাজ করার জন্য
+// ডায়নামিক আইকন ট্র্যাকার হেল্পার - ফিক্স: আইকন থেকে text-brand-primary ক্লাস রিমুভ করা হয়েছে
 const getServiceIcon = (iconName: string) => {
   const iconStyle = "w-6 h-6";
   switch (iconName) {
@@ -138,16 +136,14 @@ export const ServicesSection: React.FC = () => {
   }, []);
 
   return (
-    // ফিক্স: py-16 md:py-24 এর পরিবর্তে py-12 lg:py-16 ব্যবহার করা হয়েছে অতিরিক্ত গ্যাপ কমানোর জন্য
-    <section className="py-12 lg:py-16 bg-brand-bg text-left relative overflow-hidden border-b border-brand-neutral-border">
+    // ফিক্স: গ্লোবাল `.home-section` ক্লাসটি ব্যবহার করা হয়েছে অতিরিক্ত গ্যাপ কমানোর জন্য
+    <section className="home-section bg-brand-bg text-left relative overflow-hidden border-b border-brand-neutral-border">
       
-      {/* ব্যাকগ্রাউন্ডে অত্যন্ত হালকা কাস্টম গোল্ডেন শ্যাডো ডট */}
       <div className="absolute top-1/2 left-0 w-[400px] h-[400px] rounded-full bg-brand-primary/5 blur-[100px] pointer-events-none" />
 
       <div className="premium-container">
         
-        {/* সেকশন হেডার প্যানেল - ফিক্স: গ্যাপ কমানোর জন্য mb-12 দেওয়া হয়েছে */}
-        <div className="max-w-xl mb-12">
+        <div className="max-w-xl mb-12 lg:mb-16">
           <span className="text-brand-primary font-heading font-extrabold text-xs tracking-wider uppercase mb-3 inline-block flex items-center gap-1.5">
             <Sparkles className="w-3.5 h-3.5 text-brand-accent" />
             What We Do
@@ -160,7 +156,6 @@ export const ServicesSection: React.FC = () => {
           </p>
         </div>
 
-        {/* সার্ভিসেস কার্ড গ্রিড রেন্ডারিং */}
         {loading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             <SkeletonCard />
@@ -189,18 +184,15 @@ export const ServicesSection: React.FC = () => {
                     </span>
                   </div>
 
-                  {/* সার্ভিস নাম */}
                   <h3 className="font-heading font-bold text-lg text-brand-neutral-charcoal mb-2.5 group-hover:text-brand-primary transition-colors duration-300">
                     {service.name}
                   </h3>
 
-                  {/* সার্ভিস ডেসক্রিপশন */}
                   <p className="text-sm text-brand-neutral-muted leading-relaxed">
                     {service.shortDescription}
                   </p>
                 </div>
 
-                {/* "Learn More" ডায়নামিক অ্যাকশন লিঙ্ক */}
                 <div className="mt-6 pt-5 border-t border-brand-neutral-border/50">
                   <Link 
                     to={`/services/${service.slug}`}
@@ -215,7 +207,6 @@ export const ServicesSection: React.FC = () => {
           </motion.div>
         )}
 
-        {/* সেকশনের নিচে গ্লোবাল অ্যাকশন সিটিএ বার */}
         <div className="mt-12 text-center">
           <Button to="/services" variant="outline" size="md">
             View All Services

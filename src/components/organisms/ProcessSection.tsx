@@ -34,7 +34,7 @@ interface ProcessStep {
 }
 
 export const ProcessSection: React.FC = () => {
-  // আইকন থেকে ফিক্সড কালার সরিয়ে দেওয়া হয়েছে যাতে হোভার কাজ করে
+  // ফিক্স: আইকন থেকে text-brand-primary ক্লাসটি রিমুভ করা হয়েছে
   const steps: ProcessStep[] = [
     {
       number: '01',
@@ -63,8 +63,8 @@ export const ProcessSection: React.FC = () => {
   ];
 
   return (
-    // গ্লোবাল `.home-section` ক্লাসটি ব্যবহার করা হয়েছে অতিরিক্ত গ্যাপ কমানোর জন্য
-    <section className="home-section bg-white text-left relative overflow-hidden border-b border-brand-neutral-border">
+    // ফিক্স: অতিরিক্ত গ্যাপ কমানোর জন্য py-16 md:py-24 এর পরিবর্তে py-12 lg:py-16 ব্যবহার করা হয়েছে
+    <section className="py-12 lg:py-16 bg-white text-left relative overflow-hidden border-b border-brand-neutral-border">
       
       <div className="absolute top-0 right-0 w-[400px] h-[400px] rounded-full bg-brand-accent/5 blur-[100px] pointer-events-none" />
 
@@ -104,7 +104,7 @@ export const ProcessSection: React.FC = () => {
                   {step.number}
                 </div>
 
-                {/* ফাইনাল ফিক্স: আইকনের ডিফল্ট কালার text-brand-primary এবং হোভারে text-brand-accent হবে */}
+                {/* ফাইনাল ফিক্স: আইকন বক্সের ডিফল্ট কালার text-brand-primary এবং হোভারে text-brand-accent হবে */}
                 <div className="w-12 h-12 rounded-xl bg-brand-primary/5 text-brand-primary flex items-center justify-center mb-6 group-hover:bg-brand-primary group-hover:text-brand-accent transition-all duration-300 relative z-10 border border-brand-primary/5">
                   <span className="group-hover:scale-110 transition-transform duration-300">
                     {step.icon}
@@ -123,6 +123,7 @@ export const ProcessSection: React.FC = () => {
           </motion.div>
 
         </div>
+
       </div>
     </section>
   );
