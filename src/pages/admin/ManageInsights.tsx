@@ -5,8 +5,7 @@ import {
   collection, 
   getDocs, 
   addDoc, 
-  setDoc, // ফিক্সড: setDoc ইমপোর্ট করা হলো
-  updateDoc, 
+  setDoc, // ফিক্সড: updateDoc এর পরিবর্তে setDoc ইমপোর্ট করা হয়েছে
   deleteDoc, 
   doc, 
   query, 
@@ -36,6 +35,7 @@ import { Button } from '../../components/atoms/Button';
 import { Input } from '../../components/atoms/Input';
 import toast from 'react-hot-toast';
 
+// রিয়েক্ট কুইল রিচ-টেক্সট এডিটর এবং সিএসএস ইমপোর্ট
 // @ts-ignore
 import 'react-quill/dist/quill.snow.css';
 import ReactQuill from 'react-quill';
@@ -47,6 +47,19 @@ const containerVariants = {
     opacity: 1,
     transition: {
       staggerChildren: 0.08,
+    },
+  },
+};
+
+const cardVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      type: 'spring',
+      damping: 20,
+      stiffness: 80,
     },
   },
 };
@@ -95,13 +108,11 @@ export const ManageInsights: React.FC = () => {
         }
         return { id: docSnap.id, ...data, publishedAt: dateStr };
       });
-      setPosts(list.length > 0 ? list : FALLBACK_POSTS);
+      if (list.length > 0) { setPosts(list); } else { setPosts(FALLBACK_POSTS); }
     } catch (error) {
       console.error('[ManageInsights load error]:', error);
       setPosts(FALLBACK_POSTS);
-    } finally {
-      setLoading(false);
-    }
+    } finally { setLoading(false); }
   };
 
   useEffect(() => { loadPosts(); }, []);
@@ -134,7 +145,7 @@ export const ManageInsights: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim() || !excerpt.trim() || !content.trim()) {
-      toast.error('Please fill in all required fields.');
+      toast.error('Please fill in all required fields (Title, Excerpt, Content).');
       return;
     }
 
@@ -180,7 +191,7 @@ export const ManageInsights: React.FC = () => {
       const docRef = doc(db, 'blogPosts', post.id);
       // ফিক্স: status আপডেট করার জন্য setDoc ব্যবহার করা নিরাপদ
       await setDoc(docRef, { status: post.status === 'published' ? 'draft' : 'published', updatedAt: serverTimestamp() }, { merge: true });
-      toast.success('Status updated.');
+      toast.success(`Post status updated.`);
       loadPosts();
     } catch (error) { toast.error('Failed to update status.'); }
   };
@@ -189,10 +200,11 @@ export const ManageInsights: React.FC = () => {
     if (!window.confirm('Are you sure?')) return;
     try {
       setLoading(true);
-      await deleteDoc(doc(db, 'blogPosts', id));
-      toast.success(`Deleted successfully.`);
+      const docRef = doc(db, 'blogPosts', id);
+      await deleteDoc(docRef);
+      toast.success(`"${name}" deleted successfully.`);
       loadPosts();
-    } catch (error) { toast.error('Failed to delete.'); } finally { setLoading(false); }
+    } catch (error) { toast.error('Failed to delete article.'); } finally { setLoading(false); }
   };
 
   const startEdit = (post: any) => {
@@ -240,38 +252,22 @@ export const ManageInsights: React.FC = () => {
       <div className="space-y-8 text-left">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-heading font-extrabold text-brand-neutral-charcoal leading-none mb-2">
-              Manage Insights & Blog
-            </h1>
-            <p className="text-xs sm:text-sm text-brand-neutral-muted">
-              Publish B2B sourcing guides, export news, and trade guides with full SEO metadata control.
-            </p>
+            <h1 className="text-2xl sm:text-3xl font-heading font-extrabold text-brand-neutral-charcoal leading-none mb-2">Manage Insights & Blog</h1>
+            <p className="text-xs sm:text-sm text-brand-neutral-muted">Publish B2B sourcing guides, export news, and trade guides with full SEO metadata control.</p>
           </div>
           {!isFormOpen && (
             <Button onClick={() => setIsFormOpen(true)} variant="primary" size="md">
-              <Plus className="w-4 h-4 mr-2" />
-              Write New Article
+              <Plus className="w-4 h-4 mr-2" /> Write New Article
             </Button>
           )}
         </div>
 
         <AnimatePresence mode="wait">
           {isFormOpen ? (
-            <motion.form 
-              onSubmit={handleSubmit}
-              className="bg-white border border-brand-neutral-border p-6 sm:p-8 rounded-card shadow-soft space-y-6 max-w-4xl"
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -15 }}
-            >
+            <motion.form onSubmit={handleSubmit} className="bg-white border border-brand-neutral-border p-6 sm:p-8 rounded-card shadow-soft space-y-6 max-w-4xl" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -15 }}>
               <div className="flex justify-between items-center pb-4 border-b border-brand-neutral-border">
-                <h2 className="font-heading font-bold text-base text-brand-neutral-charcoal flex items-center gap-2">
-                  <BookOpen className="w-5 h-5 text-brand-primary" />
-                  {editingId ? 'Edit Article Specifications' : 'Compose New B2B Article'}
-                </h2>
-                <button type="button" onClick={closeForm} className="p-1.5 rounded-full hover:bg-brand-neutral-gray text-brand-neutral-muted hover:text-brand-neutral-charcoal">
-                  <X className="w-5 h-5" />
-                </button>
+                <h2 className="font-heading font-bold text-base text-brand-neutral-charcoal flex items-center gap-2"><BookOpen className="w-5 h-5 text-brand-primary" />{editingId ? 'Edit Article Specifications' : 'Compose New B2B Article'}</h2>
+                <button type="button" onClick={closeForm} className="p-1.5 rounded-full hover:bg-brand-neutral-gray text-brand-neutral-muted hover:text-brand-neutral-charcoal"><X className="w-5 h-5" /></button>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -303,9 +299,7 @@ export const ManageInsights: React.FC = () => {
               </div>
 
               <div className="bg-brand-bg-alt/50 border border-brand-neutral-border p-5 rounded-xl text-left">
-                <h3 className="font-heading font-bold text-xs text-brand-neutral-charcoal mb-4 flex items-center gap-2 uppercase tracking-wide">
-                  <UploadCloud className="w-4 h-4 text-brand-primary" /> Featured Banner Image
-                </h3>
+                <h3 className="font-heading font-bold text-xs text-brand-neutral-charcoal mb-4 flex items-center gap-2 uppercase tracking-wide"><UploadCloud className="w-4 h-4 text-brand-primary" /> Featured Banner Image</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-12 gap-6 items-center">
                   <div className="sm:col-span-8 border-2 border-dashed border-brand-neutral-border rounded-xl p-4 text-center bg-white hover:border-brand-primary/40 transition-colors relative group cursor-pointer">
                     <input type="file" onChange={handleImageUpload} disabled={uploadingImage} className="absolute inset-0 opacity-0 cursor-pointer z-10" accept="image/png, image/jpeg, image/jpg" />
@@ -314,21 +308,17 @@ export const ManageInsights: React.FC = () => {
                     <span className="block text-[10px] text-brand-neutral-muted">Allowed: PNG, JPEG (Max 3MB)</span>
                   </div>
                   <div className="sm:col-span-4 flex justify-center">
-                    <div className="w-28 h-24 rounded-lg overflow-hidden border border-brand-neutral-border bg-brand-neutral-gray relative">
-                      <img src={imageUrl || 'https://placehold.co/150x120/1c1c1c/ffffff?text=No+Image'} alt="featured preview" className="w-full h-full object-cover" />
-                    </div>
+                    <div className="w-28 h-24 rounded-lg overflow-hidden border border-brand-neutral-border bg-brand-neutral-gray relative"><img src={imageUrl || 'https://placehold.co/150x120/1c1c1c/ffffff?text=No+Image'} alt="featured preview" className="w-full h-full object-cover" /></div>
                   </div>
                 </div>
               </div>
 
               <div className="bg-brand-secondary/5 border border-brand-primary/10 p-5 rounded-xl text-left space-y-4">
-                <h3 className="font-heading font-bold text-xs text-brand-primary flex items-center gap-2 uppercase tracking-wide border-b border-brand-primary/5 pb-2">
-                  <Globe className="w-4.5 h-4.5 text-brand-accent-dark" /> Search Engine Optimisation (SEO Configuration)
-                </h3>
+                <h3 className="font-heading font-bold text-xs text-brand-primary flex items-center gap-2 uppercase tracking-wide border-b border-brand-primary/5 pb-2"><Globe className="w-4.5 h-4.5 text-brand-accent-dark" /> Search Engine Optimisation (SEO Configuration)</h3>
                 <div className="grid grid-cols-1 gap-4">
-                  <Input label="Custom Meta Title (Auto-generated if empty)" value={metaTitle} onChange={(e) => setMetaTitle(e.target.value)} placeholder="e.g. B2B Product Sourcing Guidelines | ZM Supplier & Trading" />
-                  <Input label="Custom Meta Description (Auto-generated if empty)" multiline rows={2} value={metaDescription} onChange={(e) => setMetaDescription(e.target.value)} placeholder="e.g. Read the ultimate B2B sourcing guideline to negotiate wholesale contract specs cleanly." />
-                  <Input label="Keywords (Comma-separated lists)" value={keywords} onChange={(e) => setKeywords(e.target.value)} placeholder="e.g. B2B Sourcing, Wholesale supply, UK Trade, Import Export" />
+                  <Input label="Custom Meta Title" value={metaTitle} onChange={(e) => setMetaTitle(e.target.value)} placeholder="e.g. B2B Product Sourcing Guidelines | ZM Supplier & Trading" />
+                  <Input label="Custom Meta Description" multiline rows={2} value={metaDescription} onChange={(e) => setMetaDescription(e.target.value)} placeholder="e.g. Read the ultimate B2B sourcing guideline..." />
+                  <Input label="Keywords (Comma-separated lists)" value={keywords} onChange={(e) => setKeywords(e.target.value)} placeholder="e.g. B2B Sourcing, Wholesale supply..." />
                 </div>
               </div>
 
@@ -348,55 +338,47 @@ export const ManageInsights: React.FC = () => {
           ) : (
             <div className="bg-white border border-brand-neutral-border rounded-card shadow-soft overflow-hidden">
               <div className="p-4 border-b border-brand-neutral-border flex items-center justify-between bg-brand-bg-alt/40">
-                <div className="w-full md:w-80">
-                  <Input placeholder="Search articles by title or category..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} leftIcon={<Search className="w-4 h-4 text-brand-neutral-muted" />} />
-                </div>
-                <div className="text-xs font-bold text-brand-neutral-muted select-none uppercase tracking-wide hidden sm:block">{filteredPosts.length} Articles Listed</div>
+                <div className="w-full md:w-80"><Input placeholder="Search articles by title or category..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} leftIcon={<Search className="w-4 h-4 text-brand-neutral-muted" />} /></div>
+                <div className="text-xs font-bold text-brand-neutral-muted uppercase tracking-wide hidden sm:block">{filteredPosts.length} Articles Listed</div>
               </div>
-              {loading ? (
-                <div className="flex flex-col items-center justify-center py-20"><Loader2 className="w-8 h-8 text-brand-primary animate-spin mb-3" /></div>
-              ) : filteredPosts.length > 0 ? (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-sm select-none">
-                    <thead>
-                      <tr className="bg-brand-bg-alt/80 border-b border-brand-neutral-border text-xs font-bold text-brand-neutral-muted uppercase tracking-wider">
-                        <th className="px-6 py-3.5">Article</th>
-                        <th className="px-6 py-3.5">Slug</th>
-                        <th className="px-6 py-3.5">Category</th>
-                        <th className="px-6 py-3.5">Status</th>
-                        <th className="px-6 py-3.5">Published Date</th>
-                        <th className="px-6 py-3.5 text-right">Actions</th>
+              {loading ? <div className="p-20 text-center"><Loader2 className="animate-spin mx-auto w-8 h-8" /></div> : (
+                <table className="w-full text-left text-sm">
+                  <thead>
+                    <tr className="bg-brand-bg-alt/80 border-b border-brand-neutral-border text-xs font-bold text-brand-neutral-muted uppercase tracking-wider">
+                      <th className="px-6 py-3.5">Article</th>
+                      <th className="px-6 py-3.5">Slug</th>
+                      <th className="px-6 py-3.5">Category</th>
+                      <th className="px-6 py-3.5">Status</th>
+                      <th className="px-6 py-3.5">Published Date</th>
+                      <th className="px-6 py-3.5 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-brand-neutral-border">
+                    {filteredPosts.map((post) => (
+                      <tr key={post.id} className="hover:bg-brand-bg-alt/30">
+                        <td className="px-6 py-4 flex items-center space-x-4">
+                           <div className="w-12 h-10 rounded-lg overflow-hidden border border-brand-neutral-border bg-brand-neutral-gray"><img src={post.featuredImage?.secureUrl || post.featuredImage || 'https://placehold.co/100x80/024e33/ffffff?text=ZST'} alt={post.title} className="w-full h-full object-cover" /></div>
+                           <span className="font-bold text-brand-neutral-charcoal line-clamp-1 max-w-[200px]">{post.title}</span>
+                        </td>
+                        <td className="px-6 py-4 font-semibold text-xs text-brand-primary truncate max-w-[150px]">{post.slug}</td>
+                        <td className="px-6 py-4 font-semibold text-xs text-brand-neutral-muted">{post.category}</td>
+                        <td className="px-6 py-4">
+                          <button onClick={() => handleToggleStatus(post)} className={`inline-flex items-center space-x-1.5 text-[9px] font-extrabold uppercase px-2.5 py-1 rounded-md border ${post.status === 'published' ? 'bg-brand-primary/5 text-brand-primary border-brand-primary/20' : 'bg-brand-accent/5 text-brand-accent-dark border-brand-accent/30'}`}>
+                             {post.status === 'published' ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
+                             <span>{post.status}</span>
+                          </button>
+                        </td>
+                        <td className="px-6 py-4 font-semibold text-xs text-brand-neutral-muted">{post.publishedAt}</td>
+                        <td className="px-6 py-4 text-right">
+                           <div className="flex items-center justify-end space-x-2">
+                             <button onClick={() => startEdit(post)} className="p-2 rounded-lg bg-brand-bg-alt border text-brand-neutral-charcoal hover:bg-brand-primary hover:text-white"><Edit2 className="w-3.5 h-3.5" /></button>
+                             <button onClick={() => handleDelete(post.id, post.title)} className="p-2 rounded-lg bg-brand-bg-alt border text-red-500 hover:bg-red-500 hover:text-white"><Trash2 className="w-3.5 h-3.5" /></button>
+                           </div>
+                        </td>
                       </tr>
-                    </thead>
-                    <tbody className="divide-y divide-brand-neutral-border text-brand-neutral-charcoal">
-                      {filteredPosts.map((post) => (
-                        <tr key={post.id} className="hover:bg-brand-bg-alt/30 transition-colors duration-200">
-                          <td className="px-6 py-4 flex items-center space-x-4">
-                            <div className="w-12 h-10 rounded-lg overflow-hidden border border-brand-neutral-border shrink-0 bg-brand-neutral-gray"><img src={post.featuredImage?.secureUrl || post.featuredImage || 'https://placehold.co/100x80/024e33/ffffff?text=ZST'} alt={post.title} className="w-full h-full object-cover" /></div>
-                            <span className="font-bold text-brand-neutral-charcoal line-clamp-1 max-w-[200px]">{post.title}</span>
-                          </td>
-                          <td className="px-6 py-4 font-semibold text-xs text-brand-primary max-w-[150px] truncate">{post.slug}</td>
-                          <td className="px-6 py-4 font-semibold text-xs text-brand-neutral-muted">{post.category}</td>
-                          <td className="px-6 py-4">
-                             <button onClick={() => handleToggleStatus(post)} className={`inline-flex items-center space-x-1.5 text-[9px] font-extrabold uppercase px-2.5 py-1 rounded-md border ${post.status === 'published' ? 'bg-brand-primary/5 text-brand-primary' : 'bg-brand-accent/5 text-brand-accent-dark'}`}>
-                                {post.status === 'published' ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
-                                <span>{post.status}</span>
-                             </button>
-                          </td>
-                          <td className="px-6 py-4 font-semibold text-xs text-brand-neutral-muted">{post.publishedAt}</td>
-                          <td className="px-6 py-4 text-right">
-                            <div className="flex items-center justify-end space-x-2">
-                                <button onClick={() => startEdit(post)} className="p-2 rounded-lg bg-brand-bg-alt border border-brand-neutral-border hover:bg-brand-primary hover:text-white"><Edit2 className="w-3.5 h-3.5" /></button>
-                                <button onClick={() => handleDelete(post.id, post.title)} className="p-2 rounded-lg bg-brand-bg-alt border border-brand-neutral-border text-red-500 hover:bg-red-500 hover:text-white"><Trash2 className="w-3.5 h-3.5" /></button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              ) : (
-                <div className="py-20 text-center"><AlertCircle className="mx-auto w-10 h-10 text-brand-primary" /><p className="mt-4">No Articles Found</p></div>
+                    ))}
+                  </tbody>
+                </table>
               )}
             </div>
           )}
