@@ -25,12 +25,13 @@ import { AdminLogin } from './pages/admin/Login';
 import { AdminLayout } from './components/layouts/AdminLayout'; 
 import { Dashboard } from './pages/admin/Dashboard'; 
 import { ManageProducts } from './pages/admin/ManageProducts'; 
+import { ManageCategories } from './pages/admin/ManageCategories'; // নতুন ইমপোর্ট
 import { ManageServices } from './pages/admin/ManageServices'; 
 import { ManageEnquiries } from './pages/admin/ManageEnquiries'; 
 import { ManageMessages } from './pages/admin/ManageMessages'; 
 import { ManageInsights } from './pages/admin/ManageInsights'; 
 import { ManageFAQs } from './pages/admin/ManageFAQs'; 
-import { ManageSettings } from './pages/admin/ManageSettings'; // নতুন রিয়েল সেটিংস ম্যানেজার ইমপোর্ট
+import { ManageSettings } from './pages/admin/ManageSettings';
 
 // স্ক্রল রিস্টোরেশন হেল্পার (পেজ চেঞ্জ হলে স্বয়ংক্রিয়ভাবে স্ক্রল একদম উপরে নিয়ে যাবে)
 const ScrollToTop: React.FC = () => {
@@ -43,19 +44,14 @@ const ScrollToTop: React.FC = () => {
   return null;
 };
 
-// গ্লোবাল লেআউট শেল (রিয়েল হেডার ও ফুটার ইন্টিগ্রেটেড - Part 06, Rule 07/08)
+// গ্লোবাল লেআউট শেল
 const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return (
     <div className="min-h-screen flex flex-col bg-brand-bg text-brand-neutral-charcoal">
-      {/* গ্লোবাল হেডার */}
       <Header />
-
-      {/* প্রধান কন্টেন্ট উইন্ডো */}
       <main className="flex-grow w-full">
         {children}
       </main>
-
-      {/* গ্লোবাল ফুটার */}
       <Footer />
     </div>
   );
@@ -64,10 +60,8 @@ const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 const App: React.FC = () => {
   return (
     <Router>
-      {/* রুট পরিবর্তনের সাথে স্ক্রল রিস্টোরেশন */}
       <ScrollToTop />
 
-      {/* গ্লোবাল টোস্ট নোটিফিকেশন কনফিগ */}
       <Toaster 
         position="top-right"
         toastOptions={{
@@ -85,7 +79,6 @@ const App: React.FC = () => {
 
       <AppLayout>
         <Routes>
-          {/* গ্লোবাল পাবলিক রাউটসমূহ */}
           <Route path="/" element={<Home />} />
           <Route path="/about" element={<About />} />
           <Route path="/services" element={<Services />} /> 
@@ -108,26 +101,25 @@ const App: React.FC = () => {
           <Route path="/request-quote" element={<RequestQuote />} /> 
           <Route path="/contact" element={<Contact />} /> 
           
-          {/* লিগ্যাল পেজ রাউটসমূহ */}
           <Route path="/privacy-policy" element={<LegalPage />} />
           <Route path="/terms-and-conditions" element={<LegalPage />} />
           <Route path="/refund-policy" element={<LegalPage />} />
           <Route path="/cookie-policy" element={<LegalPage />} />
 
-          {/* সুরক্ষিত অ্যাডমিন এরিয়া রাউটসমূহ (Part 10, Section 11) */}
+          {/* সুরক্ষিত অ্যাডমিন এরিয়া রাউটসমূহ */}
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/admin" element={<AdminLayout />}>
             <Route path="dashboard" element={<Dashboard />} />
+            <Route path="categories" element={<ManageCategories />} /> {/* নতুন রাউট */}
             <Route path="products" element={<ManageProducts />} />
             <Route path="services" element={<ManageServices />} />
             <Route path="enquiries" element={<ManageEnquiries />} />
             <Route path="messages" element={<ManageMessages />} /> 
             <Route path="insights" element={<ManageInsights />} /> 
             <Route path="faqs" element={<ManageFAQs />} /> 
-            <Route path="settings" element={<ManageSettings />} /> {/* নতুন সেটিংস রাউট */}
+            <Route path="settings" element={<ManageSettings />} />
           </Route>
           
-          {/* ক্যাচ-অল ৪MD৪ নট ফাউন্ড রাউট */}
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </AppLayout>

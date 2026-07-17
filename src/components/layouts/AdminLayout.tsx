@@ -17,8 +17,9 @@ import {
   Loader2,
   ChevronRight,
   MessageSquare,
-  ExternalLink, // নতুন আইকন ইমপোর্ট
-  BookOpen      // নতুন আইকন ইমপোর্ট
+  ExternalLink,
+  BookOpen,
+  Grid // নতুন ক্যাটাগরি আইকন ইমপোর্ট করা হলো
 } from 'lucide-react';
 import { BRAND_INFO } from '../../shared/constants';
 import toast from 'react-hot-toast';
@@ -99,9 +100,10 @@ export const AdminLayout: React.FC = () => {
 
   const isTabActive = (path: string) => location.pathname === path;
 
-  // আপডেট করা সম্পূর্ণ অ্যাডমিন মেনু (Insights এবং Settings যুক্ত করা হয়েছে)
+  // আপডেট করা সম্পূর্ণ অ্যাডমিন মেনু (Manage Categories যুক্ত করা হয়েছে)
   const adminMenu = [
     { label: 'Dashboard', path: '/admin/dashboard', icon: <LayoutDashboard className="w-4 h-4" /> },
+    { label: 'Manage Categories', path: '/admin/categories', icon: <Grid className="w-4 h-4" /> }, // নতুন যুক্ত করা ক্যাটাগরি লিংক
     { label: 'Manage Products', path: '/admin/products', icon: <Package className="w-4 h-4" /> },
     { label: 'Manage Services', path: '/admin/services', icon: <FileText className="w-4 h-4" /> },
     { label: 'Quote Requests', path: '/admin/enquiries', icon: <FileText className="w-4 h-4 text-brand-accent-dark" /> },
@@ -200,7 +202,6 @@ export const AdminLayout: React.FC = () => {
             </span>
           </div>
 
-          {/* লাইভ সাইট দেখার বাটন যুক্ত করা হলো */}
           <div className="flex items-center space-x-4">
             <a 
               href="/" 
