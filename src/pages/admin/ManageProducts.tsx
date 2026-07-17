@@ -5,6 +5,7 @@ import {
   collection, 
   getDocs, 
   addDoc, 
+  setDoc, // নতুন ইমপোর্ট
   updateDoc, 
   deleteDoc, 
   doc, 
@@ -29,13 +30,13 @@ import {
   CheckCircle,
   Package,
   AlertCircle,
-  Globe // গ্লোবাল এসইও প্যানেলের আইকন ইমপোর্ট
+  Globe 
 } from 'lucide-react';
 import { Button } from '../../components/atoms/Button';
 import { Input } from '../../components/atoms/Input';
 import toast from 'react-hot-toast';
 
-// মোশন অ্যানিমেশন ভ্যারিয়েন্টস (Part 06, Rule 32)
+// মোশন অ্যানিমেশন ভ্যারিয়েন্টস
 const containerVariants = {
   hidden: { opacity: 0 },
   visible: {
@@ -46,20 +47,6 @@ const containerVariants = {
   },
 };
 
-const cardVariants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: {
-      type: 'spring',
-      damping: 20,
-      stiffness: 80,
-    },
-  },
-};
-
-// ফায়ারস্টোর ডেটাবেস কানেকশন পেন্ডিং বা খালি থাকলে ৫ নম্বর পেজের ইমেজে থাকা হুবহু ১২টি আসল B2B আইটেমের ডাটা
 const FALLBACK_PRODUCTS = [
   { id: 'p1', name: 'Premium Rice', category: 'Dry Goods', slug: 'premium-rice', desc: 'Premium Basmati and long-grain rice available in wholesale bulk sacks.', image: 'https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&q=80&w=400', moq: '1 Pallet', pkg: '25kg Sacks', status: 'published' },
   { id: 'p2', name: 'Organic Pulses', category: 'Food Products', slug: 'organic-pulses', desc: 'Lentils, chickpeas, and beans sourced from verified global farms.', image: 'https://images.unsplash.com/photo-1547058886-f3edd4136365?auto=format&fit=crop&q=80&w=400', moq: '500 kg', pkg: 'Bulk Bags', status: 'published' },
@@ -80,12 +67,10 @@ export const ManageProducts: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   
-  // ফর্ম ও এডিটিং স্টেট
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  // প্রোডাক্ট ফর্ম ফিল্ডস স্টেট (B2B Grouped Form - Part 05A, Rule 40)
   const [name, setName] = useState('');
   const [productCode, setProductCode] = useState('');
   const [category, setCategory] = useState('Dry Goods');
@@ -98,12 +83,10 @@ export const ManageProducts: React.FC = () => {
   const [imageUrl, setImageUrl] = useState('');
   const [uploadingImage, setUploadingImage] = useState(false);
 
-  // প্রোডাক্ট নির্দিষ্ট এসইও প্যানেল স্টেট (Product SEO State - Part 07, Rule 79)
   const [metaTitle, setMetaTitle] = useState('');
   const [metaDescription, setMetaDescription] = useState('');
   const [keywords, setKeywords] = useState('');
 
-  // ডেটা লোড করার লাইফ সাইকেল
   const loadProducts = async () => {
     try {
       setLoading(true);
@@ -131,18 +114,16 @@ export const ManageProducts: React.FC = () => {
     loadProducts();
   }, []);
 
-  // ক্লাউডিনারি ইমেজ আপলোডার (Vite টাইপ-সেফ - Part 07, Rule 61)
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
     const file = files[0];
-
     const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg'];
     if (!allowedTypes.includes(file.type)) {
       toast.error('Only PNG, JPG, and JPEG images are allowed.');
       return;
     }
-    if (file.size > 3 * 1024 * 1024) { // সর্বোচ্চ ৩ এমবি
+    if (file.size > 3 * 1024 * 1024) {
       toast.error('Maximum image size is 3MB.');
       return;
     }
@@ -152,7 +133,6 @@ export const ManageProducts: React.FC = () => {
     const preset = (import.meta as any).env.VITE_CLOUDINARY_UPLOAD_PRESET;
 
     if (!cloudName || !preset) {
-      // স্যান্ডবক্স মোড অটো-ফিট
       setTimeout(() => {
         setImageUrl('https://res.cloudinary.com/demo/image/upload/v12345678/sample.jpg');
         setUploadingImage(false);
@@ -165,13 +145,11 @@ export const ManageProducts: React.FC = () => {
       const formData = new FormData();
       formData.append('file', file);
       formData.append('upload_preset', preset);
-
       const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
         method: 'POST',
         body: formData
       });
       const data = await res.json();
-
       if (data.secure_url) {
         setImageUrl(data.secure_url);
         toast.success('Image uploaded successfully to Cloudinary.');
@@ -185,10 +163,8 @@ export const ManageProducts: React.FC = () => {
     }
   };
 
-  // ফর্ম সাবমিট হ্যান্ডলার (তৈরি ও সম্পাদনা - Part 05A, Rule 39)
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     if (!name.trim() || !shortDescription.trim()) {
       toast.error('Please fill in all required fields.');
       return;
@@ -205,7 +181,7 @@ export const ManageProducts: React.FC = () => {
         productCode: productCode.trim() || `ZST-${category.substring(0, 3).toUpperCase()}-${Math.floor(100 + Math.random() * 900)}`,
         category,
         shortDescription: shortDescription.trim(),
-        desc: shortDescription.trim(), // সামঞ্জস্যতা বজায় রাখতে
+        desc: shortDescription.trim(),
         moq: moq.trim() || '1 Pallet',
         pkg: pkg.trim() || 'Standard Sacks',
         availabilityStatus,
@@ -216,8 +192,6 @@ export const ManageProducts: React.FC = () => {
         isFeatured: false,
         sortOrder: products.length + 1,
         updatedAt: serverTimestamp(),
-        
-        // প্রোডাক্ট নির্দিষ্ট এসইও মেটাডাটা সাবমিট লজিক (Product SEO Object - Part 07, Rule 79)
         seo: {
           metaTitle: metaTitle.trim() || `${name.trim()} | Wholesale & B2B Supply | ${BRAND_INFO.name}`,
           metaDescription: metaDescription.trim() || shortDescription.trim().substring(0, 155),
@@ -236,17 +210,15 @@ export const ManageProducts: React.FC = () => {
       };
 
       if (editingId) {
-        // এডিট বা মডিফিকেশন প্রসেস
+        // ফিক্স: updateDoc এর বদলে setDoc এবং merge: true ব্যবহার করা হলো
         const docRef = doc(db, 'products', editingId);
-        await updateDoc(docRef, productDoc);
+        await setDoc(docRef, productDoc, { merge: true });
         toast.success(`${name} updated successfully.`);
       } else {
-        // নতুন প্রোডাক্ট তৈরি
         productDoc.createdAt = serverTimestamp();
         await addDoc(productsRef, productDoc);
         toast.success(`${name} created successfully.`);
       }
-
       closeForm();
       loadProducts();
     } catch (error) {
@@ -257,7 +229,6 @@ export const ManageProducts: React.FC = () => {
     }
   };
 
-  // প্রোডাক্ট ডুপ্লিকেশন লজিক (কপি প্রোডাক্টের নাম সংলগ্ন 'Copy' এবং স্ট্যাটাস 'draft' সেট করবে - Part 05A, Rule 69)
   const handleDuplicate = async (product: any) => {
     try {
       setLoading(true);
@@ -267,13 +238,12 @@ export const ManageProducts: React.FC = () => {
         name: `${product.name} (Copy)`,
         slug: `${product.slug}-copy-${Math.floor(10 + Math.random() * 90)}`,
         productCode: `${product.productCode}-C`,
-        status: 'draft', // সুরক্ষার জন্য ড্রাফট থাকবে
+        status: 'draft',
         sortOrder: products.length + 1,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       };
-      delete duplicatedDoc.id; // পুরানো আইডি মুছে দেওয়া হলো
-
+      delete duplicatedDoc.id;
       await addDoc(productsRef, duplicatedDoc);
       toast.success(`Duplicated "${product.name}" as Draft.`);
       loadProducts();
@@ -285,12 +255,12 @@ export const ManageProducts: React.FC = () => {
     }
   };
 
-  // স্ট্যাটাস টগল (Published / Draft)
   const handleToggleStatus = async (product: any) => {
     try {
       const docRef = doc(db, 'products', product.id);
       const newStatus = product.status === 'published' ? 'draft' : 'published';
-      await updateDoc(docRef, { status: newStatus, updatedAt: serverTimestamp() });
+      // ফিক্স: setDoc ব্যবহার করা হলো
+      await setDoc(docRef, { status: newStatus, updatedAt: serverTimestamp() }, { merge: true });
       toast.success(`Product status updated to ${newStatus}.`);
       loadProducts();
     } catch (error) {
@@ -298,15 +268,13 @@ export const ManageProducts: React.FC = () => {
     }
   };
 
-  // প্রোডাক্ট ডিলিট মেকানিজম (নিরাপত্তা ও নিশ্চিতকরণ ডায়ালগ সহ - Part 05A, Rule 70)
   const handleDelete = async (id: string, name: string) => {
     const confirmDelete = window.confirm(`Are you sure you want to permanently delete "${name}" from B2B catalogue? This action cannot be undone.`);
     if (!confirmDelete) return;
 
     try {
       setLoading(true);
-      const docRef = doc(db, 'products', id);
-      await deleteDoc(docRef);
+      await deleteDoc(doc(db, 'products', id));
       toast.success(`"${name}" deleted successfully.`);
       loadProducts();
     } catch (error) {
@@ -316,7 +284,6 @@ export const ManageProducts: React.FC = () => {
     }
   };
 
-  // এডিটিং মোড ট্রিগার
   const startEdit = (product: any) => {
     setEditingId(product.id);
     setName(product.name);
@@ -329,12 +296,9 @@ export const ManageProducts: React.FC = () => {
     setPrivateLabel(product.privateLabelAvailable || false);
     setImageUrl(product.image || '');
     setStatus(product.status || 'draft');
-    
-    // প্রোডাক্ট নির্দিষ্ট এসইও ডেটা রিস্টোরেশন লজিক (Line 245)
     setMetaTitle(product.seo?.metaTitle || '');
     setMetaDescription(product.seo?.metaDescription || '');
     setKeywords(product.seo?.keywords ? product.seo.keywords.join(', ') : '');
-    
     setIsFormOpen(true);
   };
 
@@ -350,8 +314,6 @@ export const ManageProducts: React.FC = () => {
     setPrivateLabel(false);
     setImageUrl('');
     setStatus('draft');
-    
-    // এসইও স্টেট ক্লিয়ার করা হচ্ছে
     setMetaTitle('');
     setMetaDescription('');
     setKeywords('');
@@ -372,8 +334,6 @@ export const ManageProducts: React.FC = () => {
       </Helmet>
 
       <div className="space-y-8 text-left">
-        
-        {/* ড্যাশবোর্ড হেডার */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
             <h1 className="text-2xl sm:text-3xl font-heading font-extrabold text-brand-neutral-charcoal leading-none mb-2">
@@ -393,8 +353,6 @@ export const ManageProducts: React.FC = () => {
 
         <AnimatePresence mode="wait">
           {isFormOpen ? (
-            
-            // ৩. প্রোডাক্ট ক্রিয়েশন এবং এডিটিং ফর্ম প্যানেল
             <motion.form 
               onSubmit={handleSubmit}
               className="bg-white border border-brand-neutral-border p-6 sm:p-8 rounded-card shadow-soft space-y-6 max-w-3xl"
@@ -412,7 +370,6 @@ export const ManageProducts: React.FC = () => {
                 </button>
               </div>
 
-              {/* গ্রাউন্ড ১: বেসিক তথ্য */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Input
                   label="Product Name *"
@@ -458,7 +415,6 @@ export const ManageProducts: React.FC = () => {
                 </div>
               </div>
 
-              {/* গ্রাউন্ড ২: সোর্সিং ও কমার্শিয়াল specs */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Input
                   label="Minimum Order Quantity (MOQ)"
@@ -484,7 +440,6 @@ export const ManageProducts: React.FC = () => {
                 placeholder="Write a concise commercial overview for catalog cards..."
               />
 
-              {/* গ্রাউন্ড ৩: ক্লাউডিনারি ইমেজ আপলোডার */}
               <div className="bg-brand-bg-alt/50 border border-brand-neutral-border p-5 rounded-xl text-left">
                 <h3 className="font-heading font-bold text-xs text-brand-neutral-charcoal mb-4 flex items-center gap-2 uppercase tracking-wide">
                   <UploadCloud className="w-4 h-4 text-brand-primary" />
@@ -522,7 +477,6 @@ export const ManageProducts: React.FC = () => {
                 </div>
               </div>
 
-              {/* গ্রাউন্ড ৪: সার্চ ইঞ্জিন অপ্টিমাইজেশন মেটা প্যানেল (B2B Product SEO - Part 07, Rule 79) */}
               <div className="bg-brand-secondary/5 border border-brand-primary/10 p-5 rounded-xl text-left space-y-4">
                 <h3 className="font-heading font-bold text-xs text-brand-primary flex items-center gap-2 uppercase tracking-wide border-b border-brand-primary/5 pb-2">
                   <Globe className="w-4.5 h-4.5 text-brand-accent-dark" />
@@ -552,7 +506,6 @@ export const ManageProducts: React.FC = () => {
                 </div>
               </div>
 
-              {/* প্রাইভেট লেবেল এবং পাবলিশিং স্ট্যাটাস */}
               <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center bg-brand-bg-alt/30 p-4 rounded-xl border border-brand-neutral-border">
                 <div className="flex items-center space-x-2">
                   <input
@@ -580,7 +533,6 @@ export const ManageProducts: React.FC = () => {
                 </div>
               </div>
 
-              {/* ফর্ম অ্যাকশন বাটনস */}
               <div className="flex justify-end space-x-3 pt-4 border-t border-brand-neutral-border">
                 <Button onClick={closeForm} variant="outline" size="sm" disabled={submitting}>
                   Cancel
@@ -593,11 +545,7 @@ export const ManageProducts: React.FC = () => {
 
             </motion.form>
           ) : (
-            
-            // ৪. মেইন প্রোডাক্টস ম্যানেজার টেবিল ভিউ (ডাটা টেবিল - Part 05A, Rule 22)
             <div className="bg-white border border-brand-neutral-border rounded-card shadow-soft overflow-hidden">
-              
-              {/* সার্চ ও ফিল্টার বার */}
               <div className="p-4 border-b border-brand-neutral-border flex items-center justify-between bg-brand-bg-alt/40">
                 <div className="w-full md:w-80">
                   <Input
@@ -612,7 +560,6 @@ export const ManageProducts: React.FC = () => {
                 </div>
               </div>
 
-              {/* প্রোডাক্ট ডেটা টেবিল */}
               {loading ? (
                 <div className="flex flex-col items-center justify-center py-20">
                   <Loader2 className="w-8 h-8 text-brand-primary animate-spin mb-3" />
@@ -634,21 +581,14 @@ export const ManageProducts: React.FC = () => {
                     <tbody className="divide-y divide-brand-neutral-border text-brand-neutral-charcoal">
                       {filteredProducts.map((prod) => (
                         <tr key={prod.id} className="hover:bg-brand-bg-alt/30 transition-colors duration-200">
-                          {/* ইমেজ ও নাম */}
                           <td className="px-6 py-4 flex items-center space-x-4">
                             <div className="w-12 h-10 rounded-lg overflow-hidden border border-brand-neutral-border shrink-0 bg-brand-neutral-gray">
                               <img src={prod.image || 'https://placehold.co/100x80/024e33/ffffff?text=ZST'} alt={prod.name} className="w-full h-full object-cover" />
                             </div>
                             <span className="font-bold text-brand-neutral-charcoal line-clamp-1">{prod.name}</span>
                           </td>
-                          
-                          {/* কোড */}
                           <td className="px-6 py-4 font-semibold text-xs text-brand-primary">{prod.productCode}</td>
-                          
-                          {/* ক্যাটাগরি */}
                           <td className="px-6 py-4 font-semibold text-xs text-brand-neutral-muted">{prod.category}</td>
-                          
-                          {/* পাবলিশিং স্ট্যাটাস */}
                           <td className="px-6 py-4">
                             <button
                               onClick={() => handleToggleStatus(prod)}
@@ -663,14 +603,9 @@ export const ManageProducts: React.FC = () => {
                               <span>{prod.status}</span>
                             </button>
                           </td>
-
-                          {/* MOQ */}
                           <td className="px-6 py-4 font-semibold text-xs">{prod.moq}</td>
-
-                          {/* বাটন অ্যাকশনস (Edit, Duplicate, Delete) */}
                           <td className="px-6 py-4 text-right">
                             <div className="flex items-center justify-end space-x-2">
-                              {/* Edit */}
                               <button
                                 onClick={() => startEdit(prod)}
                                 className="p-2 rounded-lg bg-brand-bg-alt border border-brand-neutral-border text-brand-neutral-charcoal hover:bg-brand-primary hover:text-brand-accent hover:border-brand-primary transition-all duration-300"
@@ -678,8 +613,6 @@ export const ManageProducts: React.FC = () => {
                               >
                                 <Edit2 className="w-3.5 h-3.5" />
                               </button>
-
-                              {/* Duplicate */}
                               <button
                                 onClick={() => handleDuplicate(prod)}
                                 className="p-2 rounded-lg bg-brand-bg-alt border border-brand-neutral-border text-brand-neutral-charcoal hover:bg-brand-primary hover:text-brand-accent hover:border-brand-primary transition-all duration-300"
@@ -687,8 +620,6 @@ export const ManageProducts: React.FC = () => {
                               >
                                 <Copy className="w-3.5 h-3.5" />
                               </button>
-
-                              {/* Delete */}
                               <button
                                 onClick={() => handleDelete(prod.id, prod.name)}
                                 className="p-2 rounded-lg bg-brand-bg-alt border border-brand-neutral-border text-red-500 hover:bg-red-500 hover:text-white hover:border-red-500 transition-all duration-300"
@@ -704,7 +635,6 @@ export const ManageProducts: React.FC = () => {
                   </table>
                 </div>
               ) : (
-                // খালি স্টেট
                 <div className="py-20 flex flex-col items-center max-w-sm mx-auto text-center">
                   <div className="w-14 h-14 bg-brand-primary/5 rounded-full flex items-center justify-center mb-4 border border-brand-primary/10">
                     <AlertCircle className="w-6 h-6 text-brand-primary" />
@@ -715,11 +645,9 @@ export const ManageProducts: React.FC = () => {
                   </p>
                 </div>
               )}
-
             </div>
           )}
         </AnimatePresence>
-
       </div>
     </>
   );
