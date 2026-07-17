@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import { BRAND_INFO } from '../../shared/constants';
+import { MediaReference } from '../../shared/types';
 import { 
   Settings, 
   Mail, 
@@ -14,8 +15,10 @@ import {
   Globe, 
   Save,
   Loader2,
-  CheckCircle,
-  Search
+  Search,
+  Image as ImageIcon,
+  UploadCloud,
+  X
 } from 'lucide-react';
 import { Button } from '../../components/atoms/Button';
 import { Input } from '../../components/atoms/Input';
@@ -31,7 +34,11 @@ const containerVariants = {
 export const ManageSettings: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const [activeTab, setActiveTab] = useState<'general' | 'seo'>('general');
+
+  // লোগো স্টেট
+  const [logo, setLogo] = useState<MediaReference | null>(null);
 
   // গ্লোবাল ইনফরমেশন স্টেট
   const [generalInfo, setGeneralInfo] = useState({
@@ -68,6 +75,9 @@ export const ManageSettings: React.FC = () => {
           if (data.seoOverrides) {
             setSeoSettings(prev => ({ ...prev, ...data.seoOverrides }));
           }
+          if (data.brandAssets?.logo) {
+            setLogo(data.brandAssets.logo);
+          }
         }
       } catch (error) {
         console.error('[ManageSettings load error]:', error);
@@ -96,6 +106,70 @@ export const ManageSettings: React.FC = () => {
     }));
   };
 
+  // লোগো আপলোড হ্যান্ডলার (Cloudinary)
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // ফাইল টাইপ ভ্যালিডেশন
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please upload a valid image file.');
+      return;
+    }
+
+    const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
+    const uploadPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
+
+    if (!cloudName || !uploadPreset) {
+      toast.error('Cloudinary configuration is missing in environment variables.');
+      return;
+    }
+
+    try {
+      setIsUploading(true);
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('upload_preset', uploadPreset);
+
+      const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!res.ok) throw new Error('Failed to upload image to Cloudinary');
+      
+      const data = await res.json();
+
+      const mediaRef: MediaReference = {
+        secureUrl: data.secure_url,
+        cloudinaryPublicId: data.public_id,
+        resourceType: data.resource_type as 'image' | 'video' | 'raw',
+        format: data.format,
+        width: data.width,
+        height: data.height,
+        bytes: data.bytes,
+        altText: 'ZM Supplier & Trading Brand Logo',
+      };
+
+      setLogo(mediaRef);
+      toast.success('Logo uploaded temporarily. Please save settings to apply globally.');
+    } catch (error) {
+      console.error('[Cloudinary Upload Error]:', error);
+      toast.error('Failed to upload logo.');
+    } finally {
+      setIsUploading(false);
+      // ইনপুট রিসেট করা যাতে একই ফাইল পুনরায় সিলেক্ট করা যায়
+      if (e.target) {
+        e.target.value = '';
+      }
+    }
+  };
+
+  // লোগো রিমুভ হ্যান্ডলার
+  const handleRemoveLogo = () => {
+    setLogo(null);
+  };
+
   // সেভ সেটিংস হ্যান্ডলার
   const handleSaveSettings = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -104,6 +178,9 @@ export const ManageSettings: React.FC = () => {
       const docRef = doc(db, 'siteSettings', 'global');
       
       const updateData = {
+        brandAssets: {
+          logo: logo
+        },
         contactInfo: {
           email: generalInfo.email.trim(),
           phone: generalInfo.phone.trim(),
@@ -147,7 +224,7 @@ export const ManageSettings: React.FC = () => {
               Global Site Settings
             </h1>
             <p className="text-xs sm:text-sm text-brand-neutral-muted">
-              Manage website contact information, social links, and fixed pages SEO metadata.
+              Manage website contact information, social links, brand logo, and fixed pages SEO metadata.
             </p>
           </div>
         </div>
@@ -195,8 +272,74 @@ export const ManageSettings: React.FC = () => {
                   exit="exit"
                   className="space-y-8"
                 >
-                  {/* কন্টাক্ট ইনফরমেশন সেকশন */}
+                  {/* ব্র্যান্ড লোগো সেকশন */}
                   <div className="space-y-4">
+                    <h3 className="font-heading font-bold text-sm text-brand-primary uppercase tracking-wider border-b border-brand-neutral-border pb-2 flex items-center gap-2">
+                      <ImageIcon className="w-4 h-4" />
+                      Brand Logo
+                    </h3>
+                    
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6 bg-brand-secondary/5 border border-brand-neutral-border p-5 rounded-xl">
+                      {/* লোগো প্রিভিউ এরিয়া */}
+                      <div className="relative w-32 h-32 flex items-center justify-center bg-white border border-brand-neutral-border rounded-lg shadow-sm overflow-hidden shrink-0">
+                        {logo ? (
+                          <>
+                            <img 
+                              src={logo.secureUrl} 
+                              alt="Brand Logo Preview" 
+                              className="max-w-full max-h-full object-contain p-2"
+                            />
+                            <button
+                              type="button"
+                              onClick={handleRemoveLogo}
+                              className="absolute top-1 right-1 bg-red-500 hover:bg-red-600 text-white p-1 rounded-full shadow-md transition-colors"
+                              title="Remove Logo"
+                            >
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          </>
+                        ) : (
+                          <div className="flex flex-col items-center justify-center text-brand-neutral-muted">
+                            <ImageIcon className="w-8 h-8 mb-1 opacity-50" />
+                            <span className="text-[10px] font-medium uppercase tracking-wider">No Logo</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* লোগো আপলোড বাটন */}
+                      <div className="flex-1 space-y-2">
+                        <p className="text-sm text-brand-neutral-charcoal">
+                          Upload your primary brand logo. This will be displayed on the header, footer, and relevant emails.
+                        </p>
+                        <p className="text-xs text-brand-neutral-muted mb-4">
+                          Recommended format: PNG (Transparent background), max size 2MB.
+                        </p>
+                        
+                        <div className="relative inline-block">
+                          <input
+                            type="file"
+                            accept="image/png, image/jpeg, image/webp, image/svg+xml"
+                            onChange={handleLogoUpload}
+                            disabled={isUploading}
+                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
+                          />
+                          <Button 
+                            type="button" 
+                            variant="outline" 
+                            size="sm" 
+                            className="pointer-events-none"
+                            isLoading={isUploading}
+                          >
+                            {!isUploading && <UploadCloud className="w-4 h-4 mr-2" />}
+                            {isUploading ? 'Uploading to Cloudinary...' : 'Upload New Logo'}
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* কন্টাক্ট ইনফরমেশন সেকশন */}
+                  <div className="space-y-4 pt-4">
                     <h3 className="font-heading font-bold text-sm text-brand-primary uppercase tracking-wider border-b border-brand-neutral-border pb-2 flex items-center gap-2">
                       <Mail className="w-4 h-4" />
                       Contact Information
