@@ -63,15 +63,13 @@ export const ProcessSection: React.FC = () => {
   ];
 
   return (
-    // ফিক্স: গ্লোবাল `.home-section` ক্লাসটি ব্যবহার করা হয়েছে অতিরিক্ত গ্যাপ কমানোর জন্য
+    // গ্লোবাল `.home-section` ক্লাসটি ব্যবহার করা হয়েছে অতিরিক্ত গ্যাপ কমানোর জন্য
     <section className="home-section bg-white text-left relative overflow-hidden border-b border-brand-neutral-border">
       
-      {/* ব্যাকগ্রাউন্ডে অত্যন্ত হালকা কাস্টম গোল্ডেন ফ্লেয়ার শ্যাডো */}
       <div className="absolute top-0 right-0 w-[400px] h-[400px] rounded-full bg-brand-accent/5 blur-[100px] pointer-events-none" />
 
       <div className="premium-container relative z-10">
         
-        {/* সেকশন হেডার প্যানেল - ফিক্স: mb-12 lg:mb-16 ব্যবহার করা হয়েছে গ্যাপ কমানোর জন্য */}
         <div className="max-w-xl mb-12 lg:mb-16">
           <span className="text-brand-primary font-heading font-extrabold text-xs tracking-wider uppercase mb-3 inline-block flex items-center gap-1.5">
             <Sparkles className="w-3.5 h-3.5 text-brand-accent" />
@@ -85,13 +83,10 @@ export const ProcessSection: React.FC = () => {
           </p>
         </div>
 
-        {/* টাইমলাইন কন্টেইনার প্যানেল */}
         <div className="relative">
           
-          {/* ডেস্কটপে ৪টি কার্ডকে যুক্ত করার ড্যাশড কানেক্টিং লাইন */}
           <div className="hidden lg:block absolute top-[48px] left-[12%] right-[12%] border-t-2 border-dashed border-brand-neutral-border z-0" />
 
-          {/* ৪-কলাম বিশিষ্ট টাইমলাইন গ্রিড */}
           <motion.div 
             className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 relative z-10"
             variants={containerVariants}
@@ -105,24 +100,21 @@ export const ProcessSection: React.FC = () => {
                 className="flex flex-col items-start text-left bg-brand-surface p-6 rounded-card border border-brand-neutral-border shadow-soft hover:shadow-premium transition-all duration-300 relative group"
                 variants={stepVariants}
               >
-                {/* ভাসমান বাবল ইন্ডিকেটর */}
                 <div className="absolute top-4 right-6 font-heading font-extrabold text-3xl text-brand-accent/30 group-hover:text-brand-accent transition-colors duration-300 select-none">
                   {step.number}
                 </div>
 
-                {/* আইকন বক্স সেটআপ - ফিক্স: হোভারের সময় কালার ওভারল্যাপ ঠিক করা হয়েছে */}
+                {/* ফাইনাল ফিক্স: আইকনের ডিফল্ট কালার text-brand-primary এবং হোভারে text-brand-accent হবে */}
                 <div className="w-12 h-12 rounded-xl bg-brand-primary/5 text-brand-primary flex items-center justify-center mb-6 group-hover:bg-brand-primary group-hover:text-brand-accent transition-all duration-300 relative z-10 border border-brand-primary/5">
                   <span className="group-hover:scale-110 transition-transform duration-300">
                     {step.icon}
                   </span>
                 </div>
 
-                {/* প্রসেস শিরোনাম */}
                 <h3 className="font-heading font-bold text-lg text-brand-neutral-charcoal mb-3 group-hover:text-brand-primary transition-colors duration-300">
                   {step.title}
                 </h3>
 
-                {/* প্রসেস ডেসক্রিপশন */}
                 <p className="text-sm text-brand-neutral-muted leading-relaxed">
                   {step.description}
                 </p>
@@ -131,7 +123,6 @@ export const ProcessSection: React.FC = () => {
           </motion.div>
 
         </div>
-
       </div>
     </section>
   );
