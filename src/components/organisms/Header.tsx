@@ -4,9 +4,19 @@ import { Menu, X, FileText, Phone, Mail, Clock } from 'lucide-react';
 import { Button } from '../atoms/Button';
 import { BRAND_INFO } from '../../shared/constants';
 import { useQuoteStore } from '../../hooks/useQuoteStore';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '../../firebase/config';
 
 // ১. গ্লোবাল ইউটিলিটি টপ-বার (ডেস্কটপে দৃশ্যমান, মোবাইলে হিডেন থাকবে - Part 03, Section 03)
-const TopBar: React.FC = () => {
+interface TopBarProps {
+  settings: {
+    email: string;
+    phone: string;
+    workingHours: string;
+  };
+}
+
+const TopBar: React.FC<TopBarProps> = ({ settings }) => {
   return (
     <div className="hidden lg:block bg-brand-secondary text-white border-b border-brand-secondary-dark py-2 text-xs font-medium">
       <div className="max-w-container mx-auto px-6 flex justify-between items-center">
@@ -14,19 +24,19 @@ const TopBar: React.FC = () => {
           <span className="flex items-center text-brand-accent-light font-semibold">
             UK Standard Sourcing & Supply
           </span>
-          <a href={`mailto:${BRAND_INFO.email}`} className="flex items-center hover:text-brand-accent transition-colors">
+          <a href={`mailto:${settings.email}`} className="flex items-center hover:text-brand-accent transition-colors">
             <Mail className="w-3.5 h-3.5 mr-2 text-brand-accent" />
-            {BRAND_INFO.email}
+            {settings.email}
           </a>
-          <a href={`tel:${BRAND_INFO.phone}`} className="flex items-center hover:text-brand-accent transition-colors">
+          <a href={`tel:${settings.phone}`} className="flex items-center hover:text-brand-accent transition-colors">
             <Phone className="w-3.5 h-3.5 mr-2 text-brand-accent" />
-            {BRAND_INFO.phone}
+            {settings.phone}
           </a>
         </div>
         <div className="flex items-center space-x-4">
           <span className="flex items-center text-brand-accent-pale">
             <Clock className="w-3.5 h-3.5 mr-1.5" />
-            {BRAND_INFO.workingHours}
+            {settings.workingHours}
           </span>
           <span className="text-brand-accent font-semibold">B2B Enquiries Welcome</span>
         </div>
@@ -40,10 +50,40 @@ export const Header: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
 
+  // ডায়নামিক সেটিংস স্টেট (ফায়ারস্টোর থেকে আসার আগে constants এর ডেটা ফলব্যাক হিসেবে থাকবে)
+  const [settings, setSettings] = useState({
+    email: BRAND_INFO.email,
+    phone: BRAND_INFO.phone,
+    workingHours: BRAND_INFO.workingHours,
+    logoUrl: '' as string | null | undefined,
+  });
+
   // Zustand স্টোর থেকে কারেন্ট কোটেশন আইটেম সংখ্যা ট্র্যাক করা
   const productCount = useQuoteStore((state) => state.productSelections.length);
   const serviceCount = useQuoteStore((state) => state.serviceSelections.length);
   const totalSelections = productCount + serviceCount;
+
+  // ফায়ারস্টোর থেকে সাইট সেটিংস লোড করা
+  useEffect(() => {
+    const fetchGlobalSettings = async () => {
+      try {
+        const docRef = doc(db, 'siteSettings', 'global');
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          setSettings({
+            email: data.contactInfo?.email || BRAND_INFO.email,
+            phone: data.contactInfo?.phone || BRAND_INFO.phone,
+            workingHours: data.contactInfo?.workingHours || BRAND_INFO.workingHours,
+            logoUrl: data.brandAssets?.logo?.secureUrl || null,
+          });
+        }
+      } catch (error) {
+        console.error('[Header Fetch Settings Error]:', error);
+      }
+    };
+    fetchGlobalSettings();
+  }, []);
 
   // স্ক্রল ডিটেকশন (স্টিকি শ্যাডো ও ব্যাকগ্রাউন্ড ট্রানজিশনের জন্য)
   useEffect(() => {
@@ -89,7 +129,7 @@ export const Header: React.FC = () => {
 
   return (
     <>
-      <TopBar />
+      <TopBar settings={settings} />
       
       {/* প্রধান হেডার কন্টেইনার (স্টিকি ও গ্লাস মরফিজম ট্রানজিশন) */}
       <header className={`sticky top-0 z-50 transition-all duration-300 ${
@@ -99,19 +139,29 @@ export const Header: React.FC = () => {
       }`}>
         <div className="max-w-container mx-auto px-4 md:px-6 flex justify-between items-center">
           
-          {/* ১. স্টাইলাইজড প্রিমিয়াম বিটুবি লোগো সেটআপ */}
-          <Link to="/" className="flex items-center space-x-2.5 p-1 rounded-md focus-visible:ring-2 focus-visible:ring-brand-primary">
-            <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-brand-primary text-brand-accent font-heading font-extrabold text-xl shadow-soft border border-brand-primary-light">
-              ZS
-            </div>
-            <div className="flex flex-col text-left">
-              <span className="font-heading font-extrabold text-base tracking-tight leading-none text-brand-primary uppercase">
-                ZM
-              </span>
-              <span className="font-heading text-[10px] font-bold tracking-widest text-brand-neutral-muted leading-none mt-1 uppercase">
-                Supplier & Trading
-              </span>
-            </div>
+          {/* ১. স্টাইলাইজড ডায়নামিক বিটুবি লোগো সেটআপ */}
+          <Link to="/" className="flex items-center p-1 rounded-md focus-visible:ring-2 focus-visible:ring-brand-primary max-h-12">
+            {settings.logoUrl ? (
+              <img 
+                src={settings.logoUrl} 
+                alt="ZM Supplier & Trading Logo" 
+                className="h-9 sm:h-10 w-auto object-contain"
+              />
+            ) : (
+              <div className="flex items-center space-x-2.5">
+                <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-brand-primary text-brand-accent font-heading font-extrabold text-xl shadow-soft border border-brand-primary-light">
+                  ZS
+                </div>
+                <div className="flex flex-col text-left">
+                  <span className="font-heading font-extrabold text-base tracking-tight leading-none text-brand-primary uppercase">
+                    ZM
+                  </span>
+                  <span className="font-heading text-[10px] font-bold tracking-widest text-brand-neutral-muted leading-none mt-1 uppercase">
+                    Supplier & Trading
+                  </span>
+                </div>
+              </div>
+            )}
           </Link>
 
           {/* ২. ডেস্কটপ নেভিগেশন লিঙ্কসমূহ (Medium to Large Screens) */}
@@ -164,7 +214,7 @@ export const Header: React.FC = () => {
               )}
             </Link>
 
-            {/* মোবাইল ড্রয়ার ট্রিপল-বার কন্ট্রোল বাটন */}
+            {/* mobile drawer control button */}
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               className="p-2 text-brand-neutral-dark hover:text-brand-primary rounded-full transition-colors focus-visible:ring-2 focus-visible:ring-brand-primary"
@@ -181,17 +231,17 @@ export const Header: React.FC = () => {
       <div className={`fixed inset-0 z-40 lg:hidden transition-all duration-300 ${
         isMobileMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
       }`}>
-        {/* ডার্ক ব্যাকড্রপ ওভারলে */}
+        {/* dark backdrop overlay */}
         <div 
           className="absolute inset-0 bg-black/40 backdrop-blur-sm" 
           onClick={() => setIsMobileMenuOpen(false)}
         />
 
-        {/* ড্রয়ার মেনু প্যানেল (ডান দিক থেকে খোলার জন্য) */}
+        {/* drawer panel (slide in from right) */}
         <aside className={`absolute top-0 right-0 h-full w-[280px] sm:w-[320px] bg-white shadow-modal flex flex-col p-6 transition-transform duration-300 safe-bottom ${
           isMobileMenuOpen ? 'translate-x-0' : 'translate-x-full'
         }`}>
-          {/* ক্লোজ ও লোগো প্যানেল */}
+          {/* close and brand info */}
           <div className="flex justify-between items-center pb-6 border-b border-brand-neutral-border">
             <span className="font-heading font-extrabold text-brand-primary text-base">
               Navigation Menu
@@ -205,7 +255,7 @@ export const Header: React.FC = () => {
             </button>
           </div>
 
-          {/* মোবাইল নেভিগেশন লিঙ্কসমূহ */}
+          {/* navigation links */}
           <nav className="flex flex-col space-y-4 py-8 flex-grow">
             {navLinks.map((link) => (
               <Link
@@ -222,7 +272,7 @@ export const Header: React.FC = () => {
             ))}
           </nav>
 
-          {/* ড্রয়ারের নিচে মোবাইল কোটেশন বাটন অ্যাকশন */}
+          {/* mobile quota button */}
           <div className="pt-6 border-t border-brand-neutral-border pb-safe">
             <Button to="/request-quote" variant="primary" fullWidth size="md">
               <FileText className="w-5 h-5 mr-2" />
