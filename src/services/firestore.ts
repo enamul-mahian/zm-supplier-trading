@@ -12,9 +12,9 @@ import {
   DocumentData,
   QueryDocumentSnapshot,
   serverTimestamp,
-  QueryConstraint // টাইপ সেফটি ফিক্স করার জন্য ইমপোর্ট করা হলো
+  QueryConstraint
 } from 'firebase/firestore';
-import { db } from '../firebase/config'; // রিলেটিভ পাথে পরিবর্তন করা হলো
+import { db } from '../firebase/config'; 
 import { 
   Product, 
   ProductCategory, 
@@ -23,7 +23,7 @@ import {
   Service, 
   FAQ, 
   QuoteRequest 
-} from '../shared/types'; // রিলেটিভ পাথে পরিবর্তন করা হলো
+} from '../shared/types'; 
 
 // গ্লোবাল ইউনিক বিটুবি কোটেশন রেফারেন্স নম্বর জেনারেটর (ZST-YYYYMMDD-RANDOM)
 const generateReferenceNumber = (): string => {
@@ -45,17 +45,19 @@ export const fetchCategories = async (): Promise<ProductCategory[]> => {
     const q = query(
       categoriesRef,
       where('status', '==', 'published'),
-      where('isEnabled', '==', true),
-      orderBy('sortOrder', 'asc')
+      where('isEnabled', '==', true)
     );
     const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(docSnap => ({
+    const results = querySnapshot.docs.map(docSnap => ({
       id: docSnap.id,
       ...docSnap.data()
     })) as ProductCategory[];
+    
+    // ফায়ারবেস ইনডেক্স এরর এড়াতে ক্লায়েন্ট-সাইডে সর্টিং করা হচ্ছে
+    return results.sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
   } catch (error) {
     console.error('[Firestore Service Error - fetchCategories]:', error);
-    return []; // ক্যাটাগরি লোড ব্যর্থ হলে অ্যাপ্লিকেশন ক্র্যাশ না করে খালি অ্যারে রিটার্ন করবে
+    return [];
   }
 };
 
@@ -76,11 +78,10 @@ export const fetchProducts = async (options?: FetchProductsOptions): Promise<{
   try {
     const productsRef = collection(db, 'products');
     
-    // টাইপস্ক্রিপ্ট টাইপ এরর ফিক্স করার জন্য QueryConstraint[] টাইপ ডিক্লেয়ার করা হলো
     const queryConstraints: QueryConstraint[] = [
       where('status', '==', 'published'),
       where('isEnabled', '==', true),
-      orderBy('sortOrder', 'asc')
+      orderBy('sortOrder', 'asc') // প্যাগিনেশন ঠিক রাখতে এটি রাখা হলো
     ];
 
     if (options?.categoryId) {
@@ -154,14 +155,15 @@ export const fetchProductVariants = async (productId: string): Promise<ProductVa
     const q = query(
       variantsRef,
       where('productId', '==', productId),
-      where('isEnabled', '==', true),
-      orderBy('sortOrder', 'asc')
+      where('isEnabled', '==', true)
     );
     const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(docSnap => ({
+    const results = querySnapshot.docs.map(docSnap => ({
       id: docSnap.id,
       ...docSnap.data()
     })) as ProductVariant[];
+    
+    return results.sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
   } catch (error) {
     console.error(`[Firestore Error - fetchProductVariants] for product ${productId}:`, error);
     return [];
@@ -177,14 +179,15 @@ export const fetchPackagingOptions = async (productId: string): Promise<ProductP
     const q = query(
       packagingRef,
       where('productId', '==', productId),
-      where('isEnabled', '==', true),
-      orderBy('sortOrder', 'asc')
+      where('isEnabled', '==', true)
     );
     const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(docSnap => ({
+    const results = querySnapshot.docs.map(docSnap => ({
       id: docSnap.id,
       ...docSnap.data()
     })) as ProductPackagingOption[];
+    
+    return results.sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
   } catch (error) {
     console.error(`[Firestore Error - fetchPackagingOptions] for product ${productId}:`, error);
     return [];
@@ -200,14 +203,15 @@ export const fetchServices = async (): Promise<Service[]> => {
     const q = query(
       servicesRef,
       where('status', '==', 'published'),
-      where('isEnabled', '==', true),
-      orderBy('sortOrder', 'asc')
+      where('isEnabled', '==', true)
     );
     const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(docSnap => ({
+    const results = querySnapshot.docs.map(docSnap => ({
       id: docSnap.id,
       ...docSnap.data()
     })) as Service[];
+    
+    return results.sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
   } catch (error) {
     console.error('[Firestore Service Error - fetchServices]:', error);
     return [];
@@ -252,10 +256,9 @@ export const fetchFAQs = async (filter?: {
   try {
     const faqsRef = collection(db, 'faqs');
     
-    // টাইপ ফিক্স করতে DocumentData[] থেকে QueryConstraint[] এ রূপান্তর করা হলো
     const constraints: QueryConstraint[] = [
-      where('isEnabled', '==', true),
-      orderBy('sortOrder', 'asc')
+      where('isEnabled', '==', true)
+      // ইনডেক্স এরর বাইপাস করতে orderBy রিমুভ করা হয়েছে
     ];
 
     if (filter?.pageId) {
@@ -268,10 +271,14 @@ export const fetchFAQs = async (filter?: {
 
     const q = query(faqsRef, ...constraints);
     const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(docSnap => ({
+    
+    const results = querySnapshot.docs.map(docSnap => ({
       id: docSnap.id,
       ...docSnap.data()
     })) as FAQ[];
+
+    // ক্লায়েন্ট-সাইডে sortOrder অনুযায়ী ডেটাগুলো সাজানো হচ্ছে
+    return results.sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
   } catch (error) {
     console.error('[Firestore Service Error - fetchFAQs]:', error);
     return [];
