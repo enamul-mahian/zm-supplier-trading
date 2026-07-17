@@ -5,7 +5,7 @@ import {
   collection, 
   getDocs, 
   addDoc, 
-  setDoc, // নতুন ইমপোর্ট
+  setDoc, 
   updateDoc, 
   deleteDoc, 
   doc, 
@@ -16,6 +16,7 @@ import {
 import { db } from '../../firebase/config';
 import { Product } from '../../shared/types';
 import { BRAND_INFO } from '../../shared/constants';
+import { fetchAdminProductCategories } from '../../services/firestore'; // নতুন ইমপোর্ট
 import { 
   Plus, 
   Search, 
@@ -62,8 +63,16 @@ const FALLBACK_PRODUCTS = [
   { id: 'p12', name: 'Packaging Items', category: 'Packaging', slug: 'packaging-items', desc: 'Hygienic disposables, biodegradable boxes, and B2B packaging supplies.', image: 'https://images.unsplash.com/photo-1530587191325-3db32d826c18?auto=format&fit=crop&q=80&w=400', moq: '100 Cartons', pkg: 'Cartons', status: 'published' }
 ];
 
+const FALLBACK_CATEGORIES = [
+  { id: 'cat-1', name: 'Packaged Foods' },
+  { id: 'cat-2', name: 'Beverages' },
+  { id: 'cat-3', name: 'Dry Goods' },
+  { id: 'cat-4', name: 'Hospitality Supplies' }
+];
+
 export const ManageProducts: React.FC = () => {
   const [products, setProducts] = useState<any[]>([]);
+  const [categories, setCategories] = useState<any[]>([]); // ক্যাটাগরি স্টেট
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   
@@ -110,8 +119,31 @@ export const ManageProducts: React.FC = () => {
     }
   };
 
+  // ক্যাটাগরি ডাটা লোড করার মেকানিজম
+  const loadCategories = async () => {
+    try {
+      const cats = await fetchAdminProductCategories();
+      if (cats && cats.length > 0) {
+        setCategories(cats);
+        // যদি এডিটিং মোডে না থাকে, তবে প্রথম ক্যাটাগরিটিকে ডিফল্ট সিলেক্টেড রাখবে
+        if (!editingId) {
+          setCategory(cats[0].name);
+        }
+      } else {
+        setCategories(FALLBACK_CATEGORIES);
+        if (!editingId) {
+          setCategory(FALLBACK_CATEGORIES[0].name);
+        }
+      }
+    } catch (error) {
+      console.error('[Load Categories Error]:', error);
+      setCategories(FALLBACK_CATEGORIES);
+    }
+  };
+
   useEffect(() => {
     loadProducts();
+    loadCategories();
   }, []);
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -306,7 +338,7 @@ export const ManageProducts: React.FC = () => {
     setEditingId(null);
     setName('');
     setProductCode('');
-    setCategory('Dry Goods');
+    setCategory(categories[0]?.name || 'Dry Goods'); // ফিক্স: ডায়নামিক প্রথম ক্যাটাগরি সেট করা হবে
     setShortDescription('');
     setMoq('');
     setPkg('');
@@ -389,15 +421,17 @@ export const ManageProducts: React.FC = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="flex flex-col text-left">
                   <label className="mb-1.5 text-xs font-semibold text-brand-neutral-charcoal">Product Category *</label>
+                  {/* ফিক্স: ড্রপডাউন অপশনগুলো ফায়ারস্টোর ক্যাটাগরি ডেটা দিয়ে ডায়নামিক করা হলো */}
                   <select
                     value={category}
                     onChange={(e) => setCategory(e.target.value)}
                     className="w-full px-4 h-11 border border-brand-neutral-border rounded-form text-sm font-semibold text-brand-neutral-charcoal focus:outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/10 cursor-pointer"
                   >
-                    <option value="Dry Goods">Dry Goods</option>
-                    <option value="Food Products">Food Products</option>
-                    <option value="Beverages">Beverages</option>
-                    <option value="Packaging">Packaging</option>
+                    {categories.map((cat) => (
+                      <option key={cat.id} value={cat.name}>
+                        {cat.name}
+                      </option>
+                    ))}
                   </select>
                 </div>
                 <div className="flex flex-col text-left">
@@ -513,7 +547,7 @@ export const ManageProducts: React.FC = () => {
                     type="checkbox"
                     checked={privateLabel}
                     onChange={(e) => setPrivateLabel(e.target.checked)}
-                    className="w-4.5 h-4.5 text-brand-primary border-brand-neutral-border focus:ring-brand-primary focus:ring-2 cursor-pointer"
+                    className="w-4.5 h-4.5 text-brand-primary border-brand-neutral-border focus:ring-brand-primary/20 focus:ring-2 cursor-pointer"
                   />
                   <label htmlFor="p-label-chk" className="text-xs sm:text-sm font-bold text-brand-neutral-charcoal cursor-pointer">
                     Private Labelling Customisation Available

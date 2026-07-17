@@ -25,7 +25,7 @@ import {
   QuoteRequest 
 } from '../shared/types'; 
 
-// গ্লোবাল ইউনিক বিটুবি কোটেশন রেফারেন্স নম্বর জেনারেটর (ZST-YYYYMMDD-RANDOM)
+// গ্লোবাল ইউনিক বিটুবি কোটেশন রেফারেন্স নম্বর জেনারেটর
 const generateReferenceNumber = (): string => {
   const dateObj = new Date();
   const year = dateObj.getFullYear();
@@ -53,13 +53,31 @@ export const fetchCategories = async (): Promise<ProductCategory[]> => {
       ...docSnap.data()
     })) as ProductCategory[];
     
-    // ফায়ারবেস ইনডেক্স এরর এড়াতে ক্লায়েন্ট-সাইডে সর্টিং করা হচ্ছে
     return results.sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
   } catch (error) {
     console.error('[Firestore Service Error - fetchCategories]:', error);
     return [];
   }
 };
+
+/**
+ * নতুন ফাংশন: অ্যাডমিন প্যানেলের জন্য সব প্রোডাক্ট ক্যাটাগরি লোড করা
+ */
+export const fetchAdminProductCategories = async (): Promise<ProductCategory[]> => {
+  try {
+    const categoriesRef = collection(db, 'productCategories');
+    const q = query(categoriesRef, orderBy('sortOrder', 'asc'));
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(docSnap => ({
+      id: docSnap.id,
+      ...docSnap.data()
+    })) as ProductCategory[];
+  } catch (error) {
+    console.error('[Firestore Service Error - fetchAdminProductCategories]:', error);
+    return [];
+  }
+};
+
 
 /**
  * ২. ডাইনামিক ফিল্টার এবং প্যাগিনেশন সহ প্রোডাক্ট ক্যাটালগ কোয়েরি সার্ভিস
@@ -81,7 +99,7 @@ export const fetchProducts = async (options?: FetchProductsOptions): Promise<{
     const queryConstraints: QueryConstraint[] = [
       where('status', '==', 'published'),
       where('isEnabled', '==', true),
-      orderBy('sortOrder', 'asc') // প্যাগিনেশন ঠিক রাখতে এটি রাখা হলো
+      orderBy('sortOrder', 'asc')
     ];
 
     if (options?.categoryId) {
@@ -258,7 +276,6 @@ export const fetchFAQs = async (filter?: {
     
     const constraints: QueryConstraint[] = [
       where('isEnabled', '==', true)
-      // ইনডেক্স এরর বাইপাস করতে orderBy রিমুভ করা হয়েছে
     ];
 
     if (filter?.pageId) {
@@ -277,7 +294,6 @@ export const fetchFAQs = async (filter?: {
       ...docSnap.data()
     })) as FAQ[];
 
-    // ক্লায়েন্ট-সাইডে sortOrder অনুযায়ী ডেটাগুলো সাজানো হচ্ছে
     return results.sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
   } catch (error) {
     console.error('[Firestore Service Error - fetchFAQs]:', error);
@@ -286,7 +302,7 @@ export const fetchFAQs = async (filter?: {
 };
 
 /**
- * ৯. সুরক্ষিত বিটুবি কোটেশন বা এনকোয়ারি রিকোয়েস্ট সাবমিশন সার্ভিস (Part 05D, Rule 20)
+ * ৯. সুরক্ষিত বিটুবি কোটেশন বা এনকোয়ারি রিকোয়েস্ট সাবমিশন সার্ভিস
  */
 export const submitQuoteRequest = async (
   quoteData: Omit<QuoteRequest, 'id' | 'referenceNumber' | 'createdAt' | 'updatedAt' | 'status'>
@@ -295,7 +311,6 @@ export const submitQuoteRequest = async (
     const quoteRequestsRef = collection(db, 'quoteRequests');
     const referenceNumber = generateReferenceNumber();
     
-    // ফায়ারস্টোর সিকিউরড রাইট মডেল (snapshots + সার্ভার টাইমস্ট্যাম্প সহ)
     const newQuoteDoc = {
       ...quoteData,
       referenceNumber,
