@@ -86,8 +86,9 @@ const FALLBACK_SERVICES = [
 ];
 
 // ডায়নামিক আইকন ট্র্যাকার হেল্পার
+// ফিক্স: আইকন থেকে text-brand-primary রিমুভ করা হয়েছে হোভার কাজ করার জন্য
 const getServiceIcon = (iconName: string) => {
-  const iconStyle = "w-6 h-6 text-brand-primary";
+  const iconStyle = "w-6 h-6";
   switch (iconName) {
     case 'Search': return <Search className={iconStyle} />;
     case 'Award': return <Award className={iconStyle} />;
@@ -99,7 +100,6 @@ const getServiceIcon = (iconName: string) => {
   }
 };
 
-// প্রিমিয়াম ক্যাটালগ কার্ড স্কেলেটন লোডার (CLS ফিক্সড করার জন্য - Part 03, Section 28)
 const SkeletonCard: React.FC = () => (
   <div className="bg-brand-surface p-6 rounded-card border border-brand-neutral-border shadow-soft h-[240px] animate-pulse flex flex-col justify-between">
     <div>
@@ -116,17 +116,14 @@ export const ServicesSection: React.FC = () => {
   const [services, setServices] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // ফায়ারস্টোর থেকে ডায়নামিক সার্ভিস লোডিং লাইফ সাইকেল
   useEffect(() => {
     const loadServices = async () => {
       try {
         setLoading(true);
         const data = await fetchServices();
         if (data && data.length > 0) {
-          // হোম পেজের জন্য সর্বোচ্চ ৬টি প্রধান সার্ভিস ফিল্টারড রাখা হচ্ছে
           setServices(data.slice(0, 6));
         } else {
-          // ডেটাবেস ফাঁকা থাকলে ফলব্যাক ডাটা দিয়ে পেজ আংশিকভাবে দৃশ্যমান রাখা হচ্ছে
           setServices(FALLBACK_SERVICES);
         }
       } catch (error) {
@@ -141,14 +138,16 @@ export const ServicesSection: React.FC = () => {
   }, []);
 
   return (
-    <section className="py-16 md:py-24 bg-brand-bg text-left relative overflow-hidden border-b border-brand-neutral-border">
+    // ফিক্স: py-16 md:py-24 এর পরিবর্তে py-12 lg:py-16 ব্যবহার করা হয়েছে অতিরিক্ত গ্যাপ কমানোর জন্য
+    <section className="py-12 lg:py-16 bg-brand-bg text-left relative overflow-hidden border-b border-brand-neutral-border">
+      
       {/* ব্যাকগ্রাউন্ডে অত্যন্ত হালকা কাস্টম গোল্ডেন শ্যাডো ডট */}
       <div className="absolute top-1/2 left-0 w-[400px] h-[400px] rounded-full bg-brand-primary/5 blur-[100px] pointer-events-none" />
 
       <div className="premium-container">
         
-        {/* সেকশন হেডার প্যানেল */}
-        <div className="max-w-xl mb-12 lg:mb-16">
+        {/* সেকশন হেডার প্যানেল - ফিক্স: গ্যাপ কমানোর জন্য mb-12 দেওয়া হয়েছে */}
+        <div className="max-w-xl mb-12">
           <span className="text-brand-primary font-heading font-extrabold text-xs tracking-wider uppercase mb-3 inline-block flex items-center gap-1.5">
             <Sparkles className="w-3.5 h-3.5 text-brand-accent" />
             What We Do
@@ -163,14 +162,12 @@ export const ServicesSection: React.FC = () => {
 
         {/* সার্ভিসেস কার্ড গ্রিড রেন্ডারিং */}
         {loading ? (
-          // ১. প্রথম রেন্ডারিংয়ে পারফরম্যান্স ধরে রাখতে স্কেলেটন লোডিং মোড
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             <SkeletonCard />
             <SkeletonCard />
             <SkeletonCard />
           </div>
         ) : (
-          // ২. ফায়ারস্টোর বা ফলব্যাক লোড সম্পন্ন হলে মেইন গ্রিড ও মোশন অ্যানিমেশন
           <motion.div 
             className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
             variants={containerVariants}
@@ -185,8 +182,8 @@ export const ServicesSection: React.FC = () => {
                 variants={cardVariants}
               >
                 <div>
-                  {/* আইকন বক্স */}
-                  <div className="w-12 h-12 rounded-xl bg-brand-primary/5 flex items-center justify-center mb-5 group-hover:bg-brand-primary group-hover:text-brand-accent transition-all duration-300">
+                  {/* আইকন বক্স - ফিক্স: হোভারের সময় কালার ওভারল্যাপ ঠিক করা হয়েছে */}
+                  <div className="w-12 h-12 rounded-xl bg-brand-primary/5 text-brand-primary flex items-center justify-center mb-5 group-hover:bg-brand-primary group-hover:text-brand-accent transition-all duration-300">
                     <span className="group-hover:scale-110 transition-transform duration-300">
                       {getServiceIcon(service.iconName || 'ShieldCheck')}
                     </span>
@@ -218,7 +215,7 @@ export const ServicesSection: React.FC = () => {
           </motion.div>
         )}
 
-        {/* সেকশনের নিচে গ্লোবাল অ্যাকশন সিটিএ বার (যদি বায়ার পুরো ডিরেক্টরি দেখতে চায়) */}
+        {/* সেকশনের নিচে গ্লোবাল অ্যাকশন সিটিএ বার */}
         <div className="mt-12 text-center">
           <Button to="/services" variant="outline" size="md">
             View All Services

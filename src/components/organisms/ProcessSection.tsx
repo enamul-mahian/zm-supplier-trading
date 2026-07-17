@@ -34,44 +34,45 @@ interface ProcessStep {
 }
 
 export const ProcessSection: React.FC = () => {
-  // ব্রিটিশ ইংলিশ ও পার্ট ০৯ গাইডলাইন মেনে ৪-ধাপ বিশিষ্ট বিটুবি প্রসেস ডাটা
+  // আইকনগুলো থেকে ফিক্সড কালার সরিয়ে দেওয়া হয়েছে যাতে হোভারের সময় কালার পরিবর্তন হতে পারে
   const steps: ProcessStep[] = [
     {
       number: '01',
       title: 'Assess',
       description: "Understand the buyer's product, volume, timeline, destination, and commercial requirements.",
-      icon: <ClipboardList className="w-6 h-6 text-brand-primary" />,
+      icon: <ClipboardList className="w-6 h-6" />,
     },
     {
       number: '02',
       title: 'Source',
       description: 'Coordinate with suitable suppliers and identify products aligned with the agreed specification.',
-      icon: <Search className="w-6 h-6 text-brand-primary" />,
+      icon: <Search className="w-6 h-6" />,
     },
     {
       number: '03',
       title: 'Coordinate',
       description: 'Organise communication, documentation, quality checks, packaging, and delivery planning.',
-      icon: <FileSignature className="w-6 h-6 text-brand-primary" />,
+      icon: <FileSignature className="w-6 h-6" />,
     },
     {
       number: '04',
       title: 'Deliver',
       description: 'Support reliable fulfilment with transparent communication and structured order tracking.',
-      icon: <CheckCircle2 className="w-6 h-6 text-brand-primary" />,
+      icon: <CheckCircle2 className="w-6 h-6" />,
     },
   ];
 
   return (
-    <section className="py-16 md:py-24 bg-white text-left relative overflow-hidden border-b border-brand-neutral-border">
+    // ফিক্স: py-24 এর পরিবর্তে py-12 lg:py-16 ব্যবহার করা হয়েছে অতিরিক্ত গ্যাপ কমানোর জন্য
+    <section className="py-12 lg:py-16 bg-white text-left relative overflow-hidden border-b border-brand-neutral-border">
       
       {/* ব্যাকগ্রাউন্ডে অত্যন্ত হালকা কাস্টম গোল্ডেন ফ্লেয়ার শ্যাডো */}
       <div className="absolute top-0 right-0 w-[400px] h-[400px] rounded-full bg-brand-accent/5 blur-[100px] pointer-events-none" />
 
       <div className="premium-container relative z-10">
         
-        {/* সেকশন হেডার প্যানেল */}
-        <div className="max-w-xl mb-16 lg:mb-20">
+        {/* সেকশন হেডার প্যানেল - ফিক্স: গ্যাপ কমানোর জন্য mb-16 এর বদলে mb-12 দেওয়া হয়েছে */}
+        <div className="max-w-xl mb-12">
           <span className="text-brand-primary font-heading font-extrabold text-xs tracking-wider uppercase mb-3 inline-block flex items-center gap-1.5">
             <Sparkles className="w-3.5 h-3.5 text-brand-accent" />
             Our Approach
@@ -87,8 +88,8 @@ export const ProcessSection: React.FC = () => {
         {/* টাইমলাইন কন্টেইনার প্যানেল */}
         <div className="relative">
           
-          {/* ডেস্কটপে ৪টি কার্ডকে যুক্ত করার ড্যাশড কানেক্টিং লাইন (Part 03, Section 09) */}
-          <div className="hidden lg:block absolute top-[52px] left-[12%] right-[12%] border-t-2 border-dashed border-brand-neutral-border z-0" />
+          {/* ডেস্কটপে ৪টি কার্ডকে যুক্ত করার ড্যাশড কানেক্টিং লাইন */}
+          <div className="hidden lg:block absolute top-[44px] left-[12%] right-[12%] border-t-2 border-dashed border-brand-neutral-border z-0" />
 
           {/* ৪-কলাম বিশিষ্ট টাইমলাইন গ্রিড */}
           <motion.div 
@@ -98,19 +99,19 @@ export const ProcessSection: React.FC = () => {
             whileInView="visible"
             viewport={{ once: true, margin: '-60px' }}
           >
-            {steps.map((step, index) => (
+            {steps.map((step) => (
               <motion.div
                 key={step.number}
                 className="flex flex-col items-start text-left bg-brand-surface p-6 rounded-card border border-brand-neutral-border shadow-soft hover:shadow-premium transition-all duration-300 relative group"
                 variants={stepVariants}
               >
-                {/* ভাসমান বাবল ইন্ডিকেটর (গোল্ডেনTypography দিয়ে প্রিমিয়াম গোল্ড টাচ) */}
+                {/* ভাসমান বাবল ইন্ডিকেটর */}
                 <div className="absolute top-4 right-6 font-heading font-extrabold text-3xl text-brand-accent/30 group-hover:text-brand-accent transition-colors duration-300 select-none">
                   {step.number}
                 </div>
 
-                {/* আইকন বক্স সেটআপ */}
-                <div className="w-13 h-12 rounded-xl bg-brand-primary/5 flex items-center justify-center mb-6 group-hover:bg-brand-primary group-hover:text-brand-accent transition-all duration-300 relative z-10 border border-brand-primary/5">
+                {/* আইকন বক্স সেটআপ - ফিক্স: হোভারের সময় কালার ওভারল্যাপ ঠিক করা হয়েছে এবং w-13 ঠিক করে w-12 দেওয়া হয়েছে */}
+                <div className="w-12 h-12 rounded-xl bg-brand-primary/5 text-brand-primary flex items-center justify-center mb-6 group-hover:bg-brand-primary group-hover:text-brand-accent transition-all duration-300 relative z-10 border border-brand-primary/5">
                   <span className="group-hover:scale-110 transition-transform duration-300">
                     {step.icon}
                   </span>
