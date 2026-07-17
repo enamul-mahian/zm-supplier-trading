@@ -82,11 +82,14 @@ export const Button: React.FC<ButtonProps> = ({
       {isLoading ? (
         <LoadingSpinner />
       ) : (
-        leftIcon && <span className="-ml-1 mr-2 flex-shrink-0" aria-hidden="true">{leftIcon}</span>
+        leftIcon && <span className="-ml-1 mr-2 flex-shrink-0 inline-flex items-center" aria-hidden="true">{leftIcon}</span>
       )}
-      <span className="truncate">{children}</span>
+      {/* ফিক্স: inline-flex এবং items-center যুক্ত করা হলো যাতে বাটনের ভেতর সরাসরি পাস করা SVG আইকন নিচে নেমে না যায় */}
+      <span className="truncate inline-flex items-center justify-center gap-2">
+        {children}
+      </span>
       {!isLoading && rightIcon && (
-        <span className="ml-2 -mr-1 flex-shrink-0" aria-hidden="true">{rightIcon}</span>
+        <span className="ml-2 -mr-1 flex-shrink-0 inline-flex items-center" aria-hidden="true">{rightIcon}</span>
       )}
     </>
   );

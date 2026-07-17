@@ -45,6 +45,11 @@
   .premium-content-width {
     @apply max-w-content mx-auto w-full;
   }
+
+  /* ফিক্স: হোম পেজের সেকশনগুলোর মাঝের অতিরিক্ত ফাঁকা জায়গা কমানোর জন্য গ্লোবাল ক্লাস */
+  .home-section {
+    @apply py-12 md:py-16 lg:py-20;
+  }
 }
 
 @layer utilities {

@@ -34,7 +34,7 @@ interface ProcessStep {
 }
 
 export const ProcessSection: React.FC = () => {
-  // আইকনগুলো থেকে ফিক্সড কালার সরিয়ে দেওয়া হয়েছে যাতে হোভারের সময় কালার পরিবর্তন হতে পারে
+  // আইকন থেকে ফিক্সড কালার সরিয়ে দেওয়া হয়েছে যাতে হোভার কাজ করে
   const steps: ProcessStep[] = [
     {
       number: '01',
@@ -63,16 +63,16 @@ export const ProcessSection: React.FC = () => {
   ];
 
   return (
-    // ফিক্স: py-24 এর পরিবর্তে py-12 lg:py-16 ব্যবহার করা হয়েছে অতিরিক্ত গ্যাপ কমানোর জন্য
-    <section className="py-12 lg:py-16 bg-white text-left relative overflow-hidden border-b border-brand-neutral-border">
+    // ফিক্স: গ্লোবাল `.home-section` ক্লাসটি ব্যবহার করা হয়েছে অতিরিক্ত গ্যাপ কমানোর জন্য
+    <section className="home-section bg-white text-left relative overflow-hidden border-b border-brand-neutral-border">
       
       {/* ব্যাকগ্রাউন্ডে অত্যন্ত হালকা কাস্টম গোল্ডেন ফ্লেয়ার শ্যাডো */}
       <div className="absolute top-0 right-0 w-[400px] h-[400px] rounded-full bg-brand-accent/5 blur-[100px] pointer-events-none" />
 
       <div className="premium-container relative z-10">
         
-        {/* সেকশন হেডার প্যানেল - ফিক্স: গ্যাপ কমানোর জন্য mb-16 এর বদলে mb-12 দেওয়া হয়েছে */}
-        <div className="max-w-xl mb-12">
+        {/* সেকশন হেডার প্যানেল - ফিক্স: mb-12 lg:mb-16 ব্যবহার করা হয়েছে গ্যাপ কমানোর জন্য */}
+        <div className="max-w-xl mb-12 lg:mb-16">
           <span className="text-brand-primary font-heading font-extrabold text-xs tracking-wider uppercase mb-3 inline-block flex items-center gap-1.5">
             <Sparkles className="w-3.5 h-3.5 text-brand-accent" />
             Our Approach
@@ -89,7 +89,7 @@ export const ProcessSection: React.FC = () => {
         <div className="relative">
           
           {/* ডেস্কটপে ৪টি কার্ডকে যুক্ত করার ড্যাশড কানেক্টিং লাইন */}
-          <div className="hidden lg:block absolute top-[44px] left-[12%] right-[12%] border-t-2 border-dashed border-brand-neutral-border z-0" />
+          <div className="hidden lg:block absolute top-[48px] left-[12%] right-[12%] border-t-2 border-dashed border-brand-neutral-border z-0" />
 
           {/* ৪-কলাম বিশিষ্ট টাইমলাইন গ্রিড */}
           <motion.div 
@@ -110,7 +110,7 @@ export const ProcessSection: React.FC = () => {
                   {step.number}
                 </div>
 
-                {/* আইকন বক্স সেটআপ - ফিক্স: হোভারের সময় কালার ওভারল্যাপ ঠিক করা হয়েছে এবং w-13 ঠিক করে w-12 দেওয়া হয়েছে */}
+                {/* আইকন বক্স সেটআপ - ফিক্স: হোভারের সময় কালার ওভারল্যাপ ঠিক করা হয়েছে */}
                 <div className="w-12 h-12 rounded-xl bg-brand-primary/5 text-brand-primary flex items-center justify-center mb-6 group-hover:bg-brand-primary group-hover:text-brand-accent transition-all duration-300 relative z-10 border border-brand-primary/5">
                   <span className="group-hover:scale-110 transition-transform duration-300">
                     {step.icon}
