@@ -5,6 +5,7 @@ import {
   collection, 
   getDocs, 
   addDoc, 
+  setDoc, 
   updateDoc, 
   deleteDoc, 
   doc, 
@@ -30,13 +31,13 @@ import {
   FileText,
   AlertCircle,
   Sparkles,
-  Globe // গ্লোবাল এসইও প্যানেলের আইকন ইমপোর্ট
+  Globe 
 } from 'lucide-react';
 import { Button } from '../../components/atoms/Button';
 import { Input } from '../../components/atoms/Input';
 import toast from 'react-hot-toast';
 
-// মোশন অ্যানিমেশন ভ্যারিয়েন্টস (Part 06, Rule 32)
+// মোশন অ্যানিমেশন ভ্যারিয়েন্টস
 const containerVariants = {
   hidden: { opacity: 0 },
   visible: {
@@ -60,7 +61,6 @@ const cardVariants = {
   },
 };
 
-// ফায়ারস্টোর ডেটাবেস কানেকশন পেন্ডিং বা খালি থাকলে বিটুবি সার্ভিস ম্যানেজার ফলব্যাক ডেটা
 const FALLBACK_SERVICES = [
   { id: 's1', name: 'Product Sourcing', slug: 'product-sourcing', eyebrow: 'B2B Sourcing Operations', shortDescription: 'We specialise in coordinating strict product specification matching with manufacturers across the UK and globally.', status: 'published', sortOrder: 1 },
   { id: 's2', name: 'Wholesale Supply', slug: 'wholesale-supply', eyebrow: 'Bulk Consignment Planning', shortDescription: 'Bulk supply solutions for retailers, distributors, importers and businesses.', status: 'published', sortOrder: 2 },
@@ -73,12 +73,10 @@ export const ManageServices: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   
-  // ফর্ম ও এডিটিং স্টেট
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  // সার্ভিস ফর্ম ফিল্ডস স্টেট (Part 05C, Rule 43)
   const [name, setName] = useState('');
   const [eyebrow, setEyebrow] = useState('');
   const [shortDescription, setShortDescription] = useState('');
@@ -86,12 +84,10 @@ export const ManageServices: React.FC = () => {
   const [imageUrl, setImageUrl] = useState('');
   const [uploadingImage, setUploadingImage] = useState(false);
 
-  // সার্ভিস নির্দিষ্ট এসইও প্যানেল স্টেট (Service SEO State - Part 07, Rule 79)
   const [metaTitle, setMetaTitle] = useState('');
   const [metaDescription, setMetaDescription] = useState('');
   const [keywords, setKeywords] = useState('');
 
-  // ডেটা লোড করার লাইফ সাইকেল
   const loadServices = async () => {
     try {
       setLoading(true);
@@ -119,7 +115,6 @@ export const ManageServices: React.FC = () => {
     loadServices();
   }, []);
 
-  // ক্লাউডিনারি ইমেজ আপলোডার (Vite টাইপ-সেফ - Part 07, Rule 61)
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
@@ -130,7 +125,7 @@ export const ManageServices: React.FC = () => {
       toast.error('Only PNG, JPG, and JPEG images are allowed.');
       return;
     }
-    if (file.size > 3 * 1024 * 1024) { // সর্বোচ্চ ৩ এমবি
+    if (file.size > 3 * 1024 * 1024) {
       toast.error('Maximum image size is 3MB.');
       return;
     }
@@ -140,7 +135,6 @@ export const ManageServices: React.FC = () => {
     const preset = (import.meta as any).env.VITE_CLOUDINARY_UPLOAD_PRESET;
 
     if (!cloudName || !preset) {
-      // স্যান্ডবক্স মোড অটো-ফিট
       setTimeout(() => {
         setImageUrl('https://res.cloudinary.com/demo/image/upload/v12345678/sample.jpg');
         setUploadingImage(false);
@@ -173,7 +167,6 @@ export const ManageServices: React.FC = () => {
     }
   };
 
-  // ফর্ম সাবমিট হ্যান্ডলার (তৈরি ও সম্পাদনা - Part 05C, Rule 44)
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -185,14 +178,13 @@ export const ManageServices: React.FC = () => {
     try {
       setSubmitting(true);
       const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-      const servicesRef = collection(db, 'services');
-
+      
       const serviceDoc: any = {
         name: name.trim(),
         slug,
         eyebrow: eyebrow.trim() || 'ZM Sourcing Solutions',
         shortDescription: shortDescription.trim(),
-        fullDescription: shortDescription.trim(), // সামঞ্জস্যতা বজায় রাখতে
+        fullDescription: shortDescription.trim(),
         cardImage: imageUrl ? { secureUrl: imageUrl } : null,
         heroImage: imageUrl ? { secureUrl: imageUrl } : null,
         status,
@@ -200,8 +192,6 @@ export const ManageServices: React.FC = () => {
         isFeatured: false,
         sortOrder: services.length + 1,
         updatedAt: serverTimestamp(),
-
-        // সার্ভিস নির্দিষ্ট এসইও মেটাডাটা সাবমিট লজিক (Service SEO Object - Part 07, Rule 79)
         seo: {
           metaTitle: metaTitle.trim() || `${name.trim()} | Sourcing & Sourcing Solutions | ${BRAND_INFO.name}`,
           metaDescription: metaDescription.trim() || shortDescription.trim().substring(0, 155),
@@ -220,14 +210,13 @@ export const ManageServices: React.FC = () => {
       };
 
       if (editingId) {
-        // এডিট বা মডিফিকেশন প্রসেস
+        // ফিক্স: updateDoc এর বদলে setDoc এবং merge: true ব্যবহার করা হলো যাতে ডকুমেন্ট না থাকলেও এরর না দেয়
         const docRef = doc(db, 'services', editingId);
-        await updateDoc(docRef, serviceDoc);
+        await setDoc(docRef, serviceDoc, { merge: true });
         toast.success(`${name} updated successfully.`);
       } else {
-        // নতুন সার্ভিস তৈরি
         serviceDoc.createdAt = serverTimestamp();
-        await addDoc(servicesRef, serviceDoc);
+        await addDoc(collection(db, 'services'), serviceDoc);
         toast.success(`${name} created successfully.`);
       }
 
@@ -241,23 +230,21 @@ export const ManageServices: React.FC = () => {
     }
   };
 
-  // সার্ভিস ডুপ্লিকেশন লজিক (কপি ফাইলের নাম সংলগ্ন 'Copy' এবং স্ট্যাটাস 'draft' সেট করবে - Part 05C, Rule 62)
   const handleDuplicate = async (service: any) => {
     try {
       setLoading(true);
-      const servicesRef = collection(db, 'services');
       const duplicatedDoc = {
         ...service,
         name: `${service.name} (Copy)`,
         slug: `${service.slug}-copy-${Math.floor(10 + Math.random() * 90)}`,
-        status: 'draft', // সুরক্ষার জন্য ড্রাফট থাকবে
+        status: 'draft',
         sortOrder: services.length + 1,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       };
-      delete duplicatedDoc.id; // পুরানো আইডি মুছে দেওয়া হলো
+      delete duplicatedDoc.id;
 
-      await addDoc(servicesRef, duplicatedDoc);
+      await addDoc(collection(db, 'services'), duplicatedDoc);
       toast.success(`Duplicated "${service.name}" as Draft.`);
       loadServices();
     } catch (error) {
@@ -268,12 +255,12 @@ export const ManageServices: React.FC = () => {
     }
   };
 
-  // স্ট্যাটাস টগল (Published / Draft)
   const handleToggleStatus = async (service: any) => {
     try {
       const docRef = doc(db, 'services', service.id);
       const newStatus = service.status === 'published' ? 'draft' : 'published';
-      await updateDoc(docRef, { status: newStatus, updatedAt: serverTimestamp() });
+      // ফিক্স: status আপডেট করার জন্য setDoc ব্যবহার করা নিরাপদ
+      await setDoc(docRef, { status: newStatus, updatedAt: serverTimestamp() }, { merge: true });
       toast.success(`Service status updated to ${newStatus}.`);
       loadServices();
     } catch (error) {
@@ -281,15 +268,13 @@ export const ManageServices: React.FC = () => {
     }
   };
 
-  // সার্ভিস ডিলিট মেকানিজম (নিরাপত্তা ও নিশ্চিতকরণ ডায়ালগ সহ - Part 05C, Rule 64)
   const handleDelete = async (id: string, name: string) => {
     const confirmDelete = window.confirm(`Are you sure you want to permanently delete "${name}" from B2B services directory? This action cannot be undone.`);
     if (!confirmDelete) return;
 
     try {
       setLoading(true);
-      const docRef = doc(db, 'services', id);
-      await deleteDoc(docRef);
+      await deleteDoc(doc(db, 'services', id));
       toast.success(`"${name}" deleted successfully.`);
       loadServices();
     } catch (error) {
@@ -299,7 +284,6 @@ export const ManageServices: React.FC = () => {
     }
   };
 
-  // এডিটিং মোড ট্রিগার
   const startEdit = (service: any) => {
     setEditingId(service.id);
     setName(service.name);
@@ -307,12 +291,9 @@ export const ManageServices: React.FC = () => {
     setShortDescription(service.shortDescription || '');
     setImageUrl(service.cardImage?.secureUrl || '');
     setStatus(service.status || 'draft');
-
-    // সার্ভিস নির্দিষ্ট এসইও ডেটা রিস্টোরেশন লজিক
     setMetaTitle(service.seo?.metaTitle || '');
     setMetaDescription(service.seo?.metaDescription || '');
     setKeywords(service.seo?.keywords ? service.seo.keywords.join(', ') : '');
-
     setIsFormOpen(true);
   };
 
@@ -323,8 +304,6 @@ export const ManageServices: React.FC = () => {
     setShortDescription('');
     setImageUrl('');
     setStatus('draft');
-
-    // এসইও স্টেট ক্লিয়ার করা হচ্ছে
     setMetaTitle('');
     setMetaDescription('');
     setKeywords('');
@@ -344,8 +323,6 @@ export const ManageServices: React.FC = () => {
       </Helmet>
 
       <div className="space-y-8 text-left">
-        
-        {/* ড্যাশবোর্ড হেডার */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
             <h1 className="text-2xl sm:text-3xl font-heading font-extrabold text-brand-neutral-charcoal leading-none mb-2">
@@ -365,8 +342,6 @@ export const ManageServices: React.FC = () => {
 
         <AnimatePresence mode="wait">
           {isFormOpen ? (
-            
-            // ৩. সার্ভিস ক্রিয়েশন এবং এডিটিং ফর্ম প্যানেল
             <motion.form 
               onSubmit={handleSubmit}
               className="bg-white border border-brand-neutral-border p-6 sm:p-8 rounded-card shadow-soft space-y-6 max-w-3xl"
@@ -384,7 +359,6 @@ export const ManageServices: React.FC = () => {
                 </button>
               </div>
 
-              {/* গ্রাউন্ড ১: বেসিক তথ্য */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Input
                   label="Service Name *"
@@ -411,7 +385,6 @@ export const ManageServices: React.FC = () => {
                 placeholder="Write a concise commercial overview for service cards..."
               />
 
-              {/* গ্রাউন্ড ২: ক্লাউডিনারি ইমেজ আপলোডার */}
               <div className="bg-brand-bg-alt/50 border border-brand-neutral-border p-5 rounded-xl text-left">
                 <h3 className="font-heading font-bold text-xs text-brand-neutral-charcoal mb-4 flex items-center gap-2 uppercase tracking-wide">
                   <UploadCloud className="w-4 h-4 text-brand-primary" />
@@ -449,7 +422,6 @@ export const ManageServices: React.FC = () => {
                 </div>
               </div>
 
-              {/* গ্রাউন্ড ৩: সার্চ ইঞ্জিন অপ্টিমাইজেশন মেটা প্যানেল (B2B Service SEO - Part 07, Rule 79) */}
               <div className="bg-brand-secondary/5 border border-brand-primary/10 p-5 rounded-xl text-left space-y-4">
                 <h3 className="font-heading font-bold text-xs text-brand-primary flex items-center gap-2 uppercase tracking-wide border-b border-brand-primary/5 pb-2">
                   <Globe className="w-4.5 h-4.5 text-brand-accent-dark" />
@@ -479,7 +451,6 @@ export const ManageServices: React.FC = () => {
                 </div>
               </div>
 
-              {/* পাবলিশিং স্ট্যাটাস কন্ট্রোল */}
               <div className="flex justify-between items-center bg-brand-bg-alt/30 p-4 rounded-xl border border-brand-neutral-border">
                 <span className="text-xs font-bold text-brand-neutral-muted uppercase tracking-wide">Publish State</span>
                 <select
@@ -492,7 +463,6 @@ export const ManageServices: React.FC = () => {
                 </select>
               </div>
 
-              {/* ফর্ম অ্যাকশন বাটনস */}
               <div className="flex justify-end space-x-3 pt-4 border-t border-brand-neutral-border">
                 <Button onClick={closeForm} variant="outline" size="sm" disabled={submitting}>
                   Cancel
@@ -502,14 +472,9 @@ export const ManageServices: React.FC = () => {
                   {editingId ? 'Update Service' : 'Save Service'}
                 </Button>
               </div>
-
             </motion.form>
           ) : (
-            
-            // ৪. মেইন সার্ভিসেস ম্যানেজার টেবিল ভিউ (ডাটা টেবিল - Part 05C, Rule 42)
             <div className="bg-white border border-brand-neutral-border rounded-card shadow-soft overflow-hidden">
-              
-              {/* সার্চ ও ফিল্টার বার */}
               <div className="p-4 border-b border-brand-neutral-border flex items-center justify-between bg-brand-bg-alt/40">
                 <div className="w-full md:w-80">
                   <Input
@@ -524,7 +489,6 @@ export const ManageServices: React.FC = () => {
                 </div>
               </div>
 
-              {/* সার্ভিস ডেটা টেবিল */}
               {loading ? (
                 <div className="flex flex-col items-center justify-center py-20">
                   <Loader2 className="w-8 h-8 text-brand-primary animate-spin mb-3" />
@@ -545,21 +509,14 @@ export const ManageServices: React.FC = () => {
                     <tbody className="divide-y divide-brand-neutral-border text-brand-neutral-charcoal">
                       {filteredServices.map((service) => (
                         <tr key={service.id} className="hover:bg-brand-bg-alt/30 transition-colors duration-200">
-                          {/* ইমেজ ও নাম */}
                           <td className="px-6 py-4 flex items-center space-x-4">
                             <div className="w-12 h-10 rounded-lg overflow-hidden border border-brand-neutral-border shrink-0 bg-brand-neutral-gray">
                               <img src={service.cardImage?.secureUrl || 'https://placehold.co/100x80/024e33/ffffff?text=ZST'} alt={service.name} className="w-full h-full object-cover" />
                             </div>
                             <span className="font-bold text-brand-neutral-charcoal line-clamp-1">{service.name}</span>
                           </td>
-                          
-                          {/* স্লাগ */}
                           <td className="px-6 py-4 font-semibold text-xs text-brand-primary">{service.slug}</td>
-                          
-                          {/* ডেস্ক */}
                           <td className="px-6 py-4 font-semibold text-xs text-brand-neutral-muted">{service.eyebrow}</td>
-                          
-                          {/* পাবলিশিং স্ট্যাটাস */}
                           <td className="px-6 py-4">
                             <button
                               onClick={() => handleToggleStatus(service)}
@@ -574,11 +531,8 @@ export const ManageServices: React.FC = () => {
                               <span>{service.status}</span>
                             </button>
                           </td>
-
-                          {/* বাটন অ্যাকশনস (Edit, Duplicate, Delete) */}
                           <td className="px-6 py-4 text-right">
                             <div className="flex items-center justify-end space-x-2">
-                              {/* Edit */}
                               <button
                                 onClick={() => startEdit(service)}
                                 className="p-2 rounded-lg bg-brand-bg-alt border border-brand-neutral-border text-brand-neutral-charcoal hover:bg-brand-primary hover:text-brand-accent hover:border-brand-primary transition-all duration-300"
@@ -586,8 +540,6 @@ export const ManageServices: React.FC = () => {
                               >
                                 <Edit2 className="w-3.5 h-3.5" />
                               </button>
-
-                              {/* Duplicate */}
                               <button
                                 onClick={() => handleDuplicate(service)}
                                 className="p-2 rounded-lg bg-brand-bg-alt border border-brand-neutral-border text-brand-neutral-charcoal hover:bg-brand-primary hover:text-brand-accent hover:border-brand-primary transition-all duration-300"
@@ -595,8 +547,6 @@ export const ManageServices: React.FC = () => {
                               >
                                 <Copy className="w-3.5 h-3.5" />
                               </button>
-
-                              {/* Delete */}
                               <button
                                 onClick={() => handleDelete(service.id, service.name)}
                                 className="p-2 rounded-lg bg-brand-bg-alt border border-brand-neutral-border text-red-500 hover:bg-red-500 hover:text-white hover:border-red-500 transition-all duration-300"
@@ -612,7 +562,6 @@ export const ManageServices: React.FC = () => {
                   </table>
                 </div>
               ) : (
-                // খালি স্টেট
                 <div className="py-20 flex flex-col items-center max-w-sm mx-auto text-center">
                   <div className="w-14 h-14 bg-brand-primary/5 rounded-full flex items-center justify-center mb-4 border border-brand-primary/10">
                     <AlertCircle className="w-6 h-6 text-brand-primary" />
@@ -623,11 +572,9 @@ export const ManageServices: React.FC = () => {
                   </p>
                 </div>
               )}
-
             </div>
           )}
         </AnimatePresence>
-
       </div>
     </>
   );
