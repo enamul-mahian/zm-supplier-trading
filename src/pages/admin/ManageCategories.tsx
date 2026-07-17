@@ -1,14 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { motion, AnimatePresence } from 'framer-motion';
-import { collection, addDoc, setDoc, deleteDoc, doc, query, orderBy, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, setDoc, deleteDoc, doc, query, orderBy, serverTimestamp, getDocs } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import { fetchAdminProductCategories } from '../../services/firestore';
 import { BRAND_INFO } from '../../shared/constants';
-import { Plus, Edit2, Trash2, Loader2, X, CheckCircle, Grid, AlertCircle } from 'lucide-react';
+import { Plus, Edit2, Trash2, Loader2, X, CheckCircle, Grid, AlertCircle, RefreshCw } from 'lucide-react';
 import { Button } from '../../components/atoms/Button';
 import { Input } from '../../components/atoms/Input';
 import toast from 'react-hot-toast';
+
+// ডিফল্ট ক্যাটাগরি যা আপনার হোম পেজে শো করে
+const DEFAULT_CATEGORIES = [
+  { name: 'Packaged Foods', sortOrder: 1, status: 'published' },
+  { name: 'Beverages', sortOrder: 2, status: 'published' },
+  { name: 'Dry Goods', sortOrder: 3, status: 'published' },
+  { name: 'Hospitality Supplies', sortOrder: 4, status: 'published' }
+];
 
 export const ManageCategories: React.FC = () => {
   const [categories, setCategories] = useState<any[]>([]);
@@ -29,6 +37,23 @@ export const ManageCategories: React.FC = () => {
   };
 
   useEffect(() => { loadCategories(); }, []);
+
+  // ডাটাবেসে ডিফল্ট ক্যাটাগরি সেভ করার ফাংশন
+  const initializeCategories = async () => {
+    setLoading(true);
+    try {
+      for (const cat of DEFAULT_CATEGORIES) {
+        await addDoc(collection(db, 'productCategories'), {
+          ...cat,
+          slug: cat.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+          isEnabled: true,
+          createdAt: serverTimestamp()
+        });
+      }
+      toast.success('Default categories initialized!');
+      loadCategories();
+    } catch (e) { toast.error('Failed to initialize.'); }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -84,8 +109,18 @@ export const ManageCategories: React.FC = () => {
       <Helmet><title>Manage Categories | {BRAND_INFO.name}</title></Helmet>
       <div className="space-y-8 text-left">
         <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-bold">Manage Categories</h1>
-          {!isFormOpen && <Button onClick={() => setIsFormOpen(true)}><Plus className="w-4 h-4 mr-2" /> Add Category</Button>}
+          <div>
+            <h1 className="text-2xl font-bold">Manage Categories</h1>
+            <p className="text-sm text-gray-500">Add or edit product categories visible on the homepage.</p>
+          </div>
+          {!isFormOpen && (
+             <div className="flex gap-2">
+                {categories.length === 0 && (
+                  <Button variant="outline" onClick={initializeCategories}><RefreshCw className="w-4 h-4 mr-2" /> Init Default</Button>
+                )}
+                <Button onClick={() => setIsFormOpen(true)}><Plus className="w-4 h-4 mr-2" /> Add Category</Button>
+             </div>
+          )}
         </div>
 
         {isFormOpen ? (
@@ -103,7 +138,12 @@ export const ManageCategories: React.FC = () => {
           </form>
         ) : (
           <div className="bg-white border rounded-card shadow-soft">
-            {loading ? <div className="p-20 text-center"><Loader2 className="animate-spin mx-auto w-8 h-8" /></div> : (
+            {loading ? <div className="p-20 text-center"><Loader2 className="animate-spin mx-auto w-8 h-8" /></div> : categories.length === 0 ? (
+                <div className="p-10 text-center">
+                    <AlertCircle className="mx-auto w-10 h-10 text-gray-300" />
+                    <p className="mt-4">No categories found. Click "Init Default" to add standard categories.</p>
+                </div>
+            ) : (
               <table className="w-full text-left">
                 <thead className="bg-gray-50"><tr><th className="px-6 py-3">Name</th><th className="px-6 py-3">Status</th><th className="px-6 py-3 text-right">Actions</th></tr></thead>
                 <tbody className="divide-y">
