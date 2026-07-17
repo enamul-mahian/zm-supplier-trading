@@ -1,7 +1,20 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  collection, 
+  addDoc, 
+  serverTimestamp,
+  doc, 
+  getDoc 
+} from 'firebase/firestore';
+import { db } from '../firebase/config';
+import { BRAND_INFO } from '../shared/constants';
+import { Button } from '../components/atoms/Button';
+import { Input } from '../components/atoms/Input';
+import { InquiryCTASection } from '../components/organisms/InquiryCTASection';
+import toast from 'react-hot-toast';
 import { 
   Sparkles, 
   Phone, 
@@ -16,13 +29,6 @@ import {
   User,
   HelpCircle
 } from 'lucide-react';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import { db } from '../firebase/config';
-import { BRAND_INFO } from '../shared/constants';
-import { Button } from '../components/atoms/Button';
-import { Input } from '../components/atoms/Input';
-import { InquiryCTASection } from '../components/organisms/InquiryCTASection';
-import toast from 'react-hot-toast';
 
 // মোশন অ্যানিমেশন ভ্যারিয়েন্টস
 const containerVariants = {
@@ -60,15 +66,42 @@ const generateMessageReference = (): string => {
 };
 
 export const Contact: React.FC = () => {
-  // প্রজেক্ট গাইডলাইন (Part 04, Section 18) অনুযায়ী রিয়াল ভেরিফাইড এড্রেস না থাকা পর্যন্ত ম্যাপ হিডেন থাকবে
-  const hasVerifiedMapLocation = false; // ম্যাপ এপিআই সেটআপ করার পর এটি true করে দিতে হবে
-  const mapIframeUrl = ''; // ম্যাপের রিয়াল আইফ্রেম ইউআরএল এখানে যুক্ত হবে
+  // ডাটাবেস সেটিংস স্টেট
+  const [contactSettings, setContactSettings] = useState({
+    email: BRAND_INFO.email,
+    phone: BRAND_INFO.phone,
+    address: BRAND_INFO.address,
+    workingHours: BRAND_INFO.workingHours,
+  });
 
-  // স্টেট ম্যানেজমেন্ট
+  // ফায়ারস্টোর থেকে সেটিংস লোড করা
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const docRef = doc(db, 'siteSettings', 'global');
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          setContactSettings({
+            email: data.contactInfo?.email || BRAND_INFO.email,
+            phone: data.contactInfo?.phone || BRAND_INFO.phone,
+            address: data.contactInfo?.address || BRAND_INFO.address,
+            workingHours: data.contactInfo?.workingHours || BRAND_INFO.workingHours,
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching contact settings:', error);
+      }
+    };
+    fetchSettings();
+  }, []);
+
+  const hasVerifiedMapLocation = false;
+  const mapIframeUrl = '';
+
   const [loading, setLoading] = useState(false);
   const [submittedRef, setSubmittedRef] = useState<string | null>(null);
 
-  // কন্টাক্ট ফর্ম স্টেট
   const [name, setName] = useState('');
   const [company, setCompanyName] = useState('');
   const [email, setEmail] = useState('');
@@ -77,15 +110,12 @@ export const Contact: React.FC = () => {
   const [message, setMessage] = useState('');
   const [consentAccepted, setConsentAccepted] = useState(false);
 
-  // কন্টাক্ট মেসেজ ফায়ারস্টোরে সাবমিট করার হ্যান্ডলার
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     if (!consentAccepted) {
       toast.error('Please accept the Privacy Policy to submit your message.');
       return;
     }
-
     if (!email.includes('@')) {
       toast.error('Please enter a valid business email address.');
       return;
@@ -96,7 +126,6 @@ export const Contact: React.FC = () => {
       const contactMessagesRef = collection(db, 'contactMessages');
       const referenceNumber = generateMessageReference();
 
-      // ফায়ারস্টোর সিকিউরড রাইট ডেটা মডেল
       const newMessageDoc = {
         referenceNumber,
         name,
@@ -127,7 +156,6 @@ export const Contact: React.FC = () => {
 
   return (
     <>
-      {/* গ্লোবাল কন্টাক্ট এসইও মেটা ট্যাগস (Part 07, Rule 06) */}
       <Helmet>
         <title>Contact Us | {BRAND_INFO.name} | B2B Trade Desk</title>
         <meta name="description" content="Get in touch with ZM Supplier & Trading. Contact our UK-standard trade coordination desk for commercial enquiries, product sourcing, or wholesale supply quotes." />
@@ -137,7 +165,6 @@ export const Contact: React.FC = () => {
 
       <div className="w-full flex flex-col bg-brand-bg">
         
-        {/* ইনার-পেজ হিরো ব্যানার */}
         <section className="bg-brand-secondary text-white py-12 text-left relative overflow-hidden border-b border-brand-secondary-dark">
           <div className="absolute top-0 right-0 w-[300px] h-[300px] rounded-full bg-brand-accent/5 blur-[80px] pointer-events-none" />
           <div className="premium-container relative z-10">
@@ -155,13 +182,11 @@ export const Contact: React.FC = () => {
           </div>
         </section>
 
-        {/* মেইন কন্টাক্ট প্যানেল (দ্বি-কলাম লেআউট - বামে যোগাযোগের তথ্য, ডানে ফর্ম) */}
         <section className="py-16 bg-white text-left relative min-h-[400px]">
           <div className="premium-container px-4 max-w-content mx-auto">
             
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
               
-              {/* বাম কলাম: যোগাযোগের ডাইনামিক কার্ডসমূহ (৫ কলাম ডেস্কটপে - Part 04, Section 18) */}
               <motion.div 
                 className="lg:col-span-5 flex flex-col space-y-6 text-left"
                 variants={containerVariants}
@@ -179,60 +204,52 @@ export const Contact: React.FC = () => {
                   </p>
                 </div>
 
-                {/* যোগাযোগের কার্ডসমূহ */}
                 <div className="flex flex-col space-y-4">
-                  {/* ফোন কার্ড */}
                   <div className="flex items-start bg-brand-bg-alt/60 p-5 rounded-xl border border-brand-neutral-border shadow-soft group hover:border-brand-primary/20 transition-all duration-300">
                     <div className="w-10 h-10 rounded-lg bg-brand-primary/5 flex items-center justify-center mr-4 shrink-0 group-hover:bg-brand-primary group-hover:text-brand-accent transition-colors duration-300">
                       <Phone className="w-5 h-5 text-brand-primary" />
                     </div>
                     <div>
                       <h4 className="font-heading font-bold text-xs text-brand-neutral-muted uppercase tracking-wider mb-1">Call Our Desk</h4>
-                      <a href={`tel:${BRAND_INFO.phone}`} className="text-sm sm:text-base font-bold text-brand-neutral-charcoal hover:text-brand-primary transition-colors">{BRAND_INFO.phone}</a>
+                      <a href={`tel:${contactSettings.phone}`} className="text-sm sm:text-base font-bold text-brand-neutral-charcoal hover:text-brand-primary transition-colors">{contactSettings.phone}</a>
                     </div>
                   </div>
 
-                  {/* ইমেইল কার্ড */}
                   <div className="flex items-start bg-brand-bg-alt/60 p-5 rounded-xl border border-brand-neutral-border shadow-soft group hover:border-brand-primary/20 transition-all duration-300">
                     <div className="w-10 h-10 rounded-lg bg-brand-primary/5 flex items-center justify-center mr-4 shrink-0 group-hover:bg-brand-primary group-hover:text-brand-accent transition-colors duration-300">
                       <Mail className="w-5 h-5 text-brand-primary" />
                     </div>
                     <div>
                       <h4 className="font-heading font-bold text-xs text-brand-neutral-muted uppercase tracking-wider mb-1">Email Enquiries</h4>
-                      <a href={`mailto:${BRAND_INFO.email}`} className="text-sm sm:text-base font-bold text-brand-neutral-charcoal hover:text-brand-primary transition-colors">{BRAND_INFO.email}</a>
+                      <a href={`mailto:${contactSettings.email}`} className="text-sm sm:text-base font-bold text-brand-neutral-charcoal hover:text-brand-primary transition-colors">{contactSettings.email}</a>
                     </div>
                   </div>
 
-                  {/* ঠিকানা কার্ড */}
                   <div className="flex items-start bg-brand-bg-alt/60 p-5 rounded-xl border border-brand-neutral-border shadow-soft group hover:border-brand-primary/20 transition-all duration-300">
                     <div className="w-10 h-10 rounded-lg bg-brand-primary/5 flex items-center justify-center mr-4 shrink-0 group-hover:bg-brand-primary group-hover:text-brand-accent transition-colors duration-300">
                       <MapPin className="w-5 h-5 text-brand-primary" />
                     </div>
                     <div>
                       <h4 className="font-heading font-bold text-xs text-brand-neutral-muted uppercase tracking-wider mb-1">Address</h4>
-                      <span className="text-sm sm:text-base font-bold text-brand-neutral-charcoal leading-tight">{BRAND_INFO.address}</span>
+                      <span className="text-sm sm:text-base font-bold text-brand-neutral-charcoal leading-tight">{contactSettings.address}</span>
                     </div>
                   </div>
 
-                  {/* ওয়ার্কিং আওয়ার্স কার্ড */}
                   <div className="flex items-start bg-brand-bg-alt/60 p-5 rounded-xl border border-brand-neutral-border shadow-soft group hover:border-brand-primary/20 transition-all duration-300">
                     <div className="w-10 h-10 rounded-lg bg-brand-primary/5 flex items-center justify-center mr-4 shrink-0 group-hover:bg-brand-primary group-hover:text-brand-accent transition-colors duration-300">
                       <Clock className="w-5 h-5 text-brand-primary" />
                     </div>
                     <div>
                       <h4 className="font-heading font-bold text-xs text-brand-neutral-muted uppercase tracking-wider mb-1">Operating Hours</h4>
-                      <span className="text-sm sm:text-base font-bold text-brand-neutral-charcoal leading-tight">{BRAND_INFO.workingHours}</span>
+                      <span className="text-sm sm:text-base font-bold text-brand-neutral-charcoal leading-tight">{contactSettings.workingHours}</span>
                     </div>
                   </div>
                 </div>
               </motion.div>
 
-              {/* ডান কলাম: সিকিউরড বিটুবি কন্টাক্ট ফর্ম (৭ কলাম - Part 04, Section 18) */}
               <div className="lg:col-span-7">
                 <AnimatePresence mode="wait">
                   {submittedRef ? (
-                    
-                    // সফল মেসেজ সাবমিশনের পর স্ক্রিন
                     <motion.div 
                       className="bg-brand-bg-alt border border-brand-neutral-border p-8 rounded-card text-center flex flex-col items-center shadow-soft"
                       initial={{ opacity: 0, scale: 0.95 }}
@@ -252,8 +269,6 @@ export const Contact: React.FC = () => {
                       <Button to="/products" variant="primary">Explore Product Catalogue</Button>
                     </motion.div>
                   ) : (
-                    
-                    // কন্টাক্ট ফর্ম ইমপ্লিমেন্টেশন
                     <form onSubmit={handleSubmit} className="space-y-4">
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <Input
@@ -313,7 +328,6 @@ export const Contact: React.FC = () => {
                         placeholder="Please write your detailed sourcing requirements, packaging format preference, timeline, or destination specifications here."
                       />
 
-                      {/* কনসেন্ট চেকবক্স */}
                       <div className="flex items-start gap-3 bg-brand-bg-alt/40 p-4 rounded-xl border border-brand-neutral-border text-left">
                         <input
                           id="contact-consent-chk"
@@ -344,11 +358,9 @@ export const Contact: React.FC = () => {
               </div>
 
             </div>
-
           </div>
         </section>
 
-        {/* ৩. ম্যাপ বা লোকেশন প্রিভিউ এরিয়া (রিয়াল লোকেশন না থাকায় গাইডলাইন অনুযায়ী হাইড রাখা হয়েছে - Part 04, Section 18) */}
         {hasVerifiedMapLocation && mapIframeUrl && (
           <section className="w-full h-80 sm:h-96 relative border-b border-brand-neutral-border overflow-hidden">
             <iframe 
@@ -362,9 +374,7 @@ export const Contact: React.FC = () => {
           </section>
         )}
 
-        {/* ৪. গ্লোবাল বিটুবি ইনকোয়ারি সিটিএ প্যানেল (রিসাইক্লিং) */}
         <InquiryCTASection />
-
       </div>
     </>
   );
