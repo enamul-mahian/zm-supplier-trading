@@ -10,7 +10,8 @@ import {
   doc, 
   query, 
   orderBy,
-  serverTimestamp 
+  serverTimestamp,
+  setDoc // ইমপোর্ট করা হলো
 } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import { FAQ } from '../../shared/types';
@@ -27,7 +28,7 @@ import {
   CheckCircle,
   HelpCircle,
   AlertCircle,
-  Sparkles // ইমপোর্ট তালিকায় যুক্ত করা হলো (টাইপ এরর ফিক্সড)
+  Sparkles 
 } from 'lucide-react';
 import { Button } from '../../components/atoms/Button';
 import { Input } from '../../components/atoms/Input';
@@ -153,9 +154,9 @@ export const ManageFAQs: React.FC = () => {
       };
 
       if (editingId) {
-        // এডিট বা মডিফিকেশন প্রসেস
+        // এডিট বা মডিফিকেশন প্রসেস - FIX: setDoc with merge applied
         const docRef = doc(db, 'faqs', editingId);
-        await updateDoc(docRef, faqDoc);
+        await setDoc(docRef, faqDoc, { merge: true });
         toast.success('FAQ updated successfully.');
       } else {
         // নতুন এফএকিউ তৈরি
@@ -179,11 +180,12 @@ export const ManageFAQs: React.FC = () => {
     try {
       const docRef = doc(db, 'faqs', faq.id);
       const newEnabledState = !faq.isEnabled;
-      await updateDoc(docRef, { 
+      // FIX: setDoc with merge applied
+      await setDoc(docRef, { 
         isEnabled: newEnabledState, 
         status: newEnabledState ? 'published' : 'draft',
         updatedAt: serverTimestamp() 
-      });
+      }, { merge: true });
       toast.success(`FAQ status updated to ${newEnabledState ? 'enabled' : 'disabled'}.`);
       loadFAQs();
     } catch (error) {
@@ -359,7 +361,7 @@ export const ManageFAQs: React.FC = () => {
                 />
               </div>
 
-              {/* গ্রাউন্ড ৩: পেজ অ্যাসোসিয়েশন ডাইনামিক চেকবক্স প্যানেল (Part 05D, Rule 17) */}
+              {/* গ্রাউন্ড ৩: পেজ অ্যাসোসিয়েশন ডাইনামিক চেকবক্স প্যানেল */}
               <div className="bg-brand-bg-alt/50 border border-brand-neutral-border p-5 rounded-xl text-left">
                 <h3 className="font-heading font-bold text-xs text-brand-neutral-charcoal mb-4 flex items-center gap-1.5 uppercase tracking-wide">
                   <Sparkles className="w-4 h-4 text-brand-accent-dark" />
@@ -469,19 +471,14 @@ export const ManageFAQs: React.FC = () => {
                     <tbody className="divide-y divide-brand-neutral-border text-brand-neutral-charcoal">
                       {filteredFAQs.map((faq) => (
                         <tr key={faq.id} className="hover:bg-brand-bg-alt/30 transition-colors duration-200">
-                          {/* ক্যাটাগরি */}
                           <td className="px-6 py-4">
                             <span className="text-[10px] font-extrabold text-brand-primary bg-brand-primary/5 border border-brand-primary/10 px-2.5 py-1 rounded-md uppercase shrink-0">
                               {faq.categoryId || 'General'}
                             </span>
                           </td>
-
-                          {/* প্রশ্ন */}
                           <td className="px-6 py-4 font-bold text-brand-neutral-charcoal line-clamp-1 max-w-[240px]">
                             {faq.question}
                           </td>
-                          
-                          {/* অ্যাসোসিয়েটেড পেজেস */}
                           <td className="px-6 py-4">
                             <div className="flex flex-wrap gap-1">
                               {faq.pageIds && Array.isArray(faq.pageIds) && faq.pageIds.length > 0 ? (
@@ -495,8 +492,6 @@ export const ManageFAQs: React.FC = () => {
                               )}
                             </div>
                           </td>
-                          
-                          {/* পাবলিশিং স্ট্যাটাস */}
                           <td className="px-6 py-4">
                             <button
                               onClick={() => handleToggleStatus(faq)}
@@ -511,14 +506,9 @@ export const ManageFAQs: React.FC = () => {
                               <span>{faq.isEnabled ? 'enabled' : 'disabled'}</span>
                             </button>
                           </td>
-
-                          {/* সর্ট অর্ডার */}
                           <td className="px-6 py-4 font-semibold text-xs text-brand-neutral-muted pl-12">{faq.sortOrder}</td>
-
-                          {/* বাটন অ্যাকশনস (Edit, Delete) */}
                           <td className="px-6 py-4 text-right">
                             <div className="flex items-center justify-end space-x-2">
-                              {/* Edit */}
                               <button
                                 onClick={() => startEdit(faq)}
                                 className="p-2 rounded-lg bg-brand-bg-alt border border-brand-neutral-border text-brand-neutral-charcoal hover:bg-brand-primary hover:text-brand-accent hover:border-brand-primary transition-all duration-300"
@@ -526,8 +516,6 @@ export const ManageFAQs: React.FC = () => {
                               >
                                 <Edit2 className="w-3.5 h-3.5" />
                               </button>
-
-                              {/* Delete */}
                               <button
                                 onClick={() => handleDelete(faq.id, faq.question)}
                                 className="p-2 rounded-lg bg-brand-bg-alt border border-brand-neutral-border text-red-500 hover:bg-red-500 hover:text-white hover:border-red-500 transition-all duration-300"
@@ -543,7 +531,6 @@ export const ManageFAQs: React.FC = () => {
                   </table>
                 </div>
               ) : (
-                // খালি স্টেট
                 <div className="py-20 flex flex-col items-center max-w-sm mx-auto text-center">
                   <div className="w-14 h-14 bg-brand-primary/5 rounded-full flex items-center justify-center mb-4 border border-brand-primary/10">
                     <AlertCircle className="w-6 h-6 text-brand-primary" />
@@ -554,11 +541,9 @@ export const ManageFAQs: React.FC = () => {
                   </p>
                 </div>
               )}
-
             </div>
           )}
         </AnimatePresence>
-
       </div>
     </>
   );
