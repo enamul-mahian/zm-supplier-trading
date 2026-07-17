@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown, Sparkles, HelpCircle, Phone, Mail, Search } from 'lucide-react'; // Search আইকন যুক্ত করা হলো
+import { ChevronDown, Sparkles, HelpCircle, Phone, Mail, Search } from 'lucide-react';
 import { fetchFAQs } from '../services/firestore';
-import { BRAND_INFO, FALLBACK_FAQS } from '../shared/constants'; // BRAND_INFO ইমপোর্ট যুক্ত করা হলো
+import { BRAND_INFO, FALLBACK_FAQS } from '../shared/constants';
 import { FAQ as FAQType } from '../shared/types';
 import { Button } from '../components/atoms/Button';
 import { Input } from '../components/atoms/Input';
@@ -275,7 +275,9 @@ export const FAQPage: React.FC = () => {
                 <FAQPageSkeleton />
               ) : filteredFAQs.length > 0 ? (
                 /* অ্যাকোর্ডিয়ন কন্টেইনার (A11y ARIA Attributes Compliant) */
+                /* ডায়নামিক key যুক্ত করে ফ্রেমার মোশন ফিল্টারিং বাগ ফিক্স করা হলো */
                 <motion.div 
+                  key={`${activeTab}_${searchQuery}`} 
                   className="flex flex-col space-y-4"
                   variants={containerVariants}
                   initial="hidden"
