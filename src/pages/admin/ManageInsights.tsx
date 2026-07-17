@@ -5,7 +5,7 @@ import {
   collection, 
   getDocs, 
   addDoc, 
-  setDoc, 
+  setDoc, // ফিক্সড: updateDoc এর পরিবর্তে setDoc ব্যবহার করা হয়েছে
   deleteDoc, 
   doc, 
   query, 
@@ -27,6 +27,7 @@ import {
   X, 
   CheckCircle,
   BookOpen,
+  Calendar,
   Globe,
   AlertCircle
 } from 'lucide-react';
@@ -37,6 +38,14 @@ import toast from 'react-hot-toast';
 // @ts-ignore
 import 'react-quill/dist/quill.snow.css';
 import ReactQuill from 'react-quill';
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.08 },
+  },
+};
 
 const FALLBACK_POSTS = [
   { id: 'b1', category: 'Industry News', title: 'Global Food Supply Trends in 2026', excerpt: 'An overview of the latest trends shaping the global food supply industry, including logistics and sourcing changes.', publishedAt: 'July 12, 2026', slug: 'global-food-supply-trends', status: 'published', author: 'ZM Trade Desk', readTime: '5 min read' },
@@ -113,7 +122,7 @@ export const ManageInsights: React.FC = () => {
       const data = await res.json();
       if (data.secure_url) {
         setImageUrl(data.secure_url);
-        toast.success('Image uploaded successfully.');
+        toast.success('Featured image uploaded successfully to Cloudinary.');
       } else { throw new Error('Upload failed'); }
     } catch (err) { toast.error('Image upload failed.'); } finally { setUploadingImage(false); }
   };
@@ -128,7 +137,8 @@ export const ManageInsights: React.FC = () => {
     try {
       setSubmitting(true);
       const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-      
+      const postsRef = collection(db, 'blogPosts');
+
       const postDoc: any = {
         title: title.trim(),
         slug,
@@ -147,11 +157,13 @@ export const ManageInsights: React.FC = () => {
       };
 
       if (editingId) {
-        await setDoc(doc(db, 'blogPosts', editingId), postDoc, { merge: true });
+        // ফিক্স: updateDoc এর বদলে setDoc এবং merge: true ব্যবহার করা হলো
+        const docRef = doc(db, 'blogPosts', editingId);
+        await setDoc(docRef, postDoc, { merge: true });
         toast.success(`"${title}" updated successfully.`);
       } else {
         postDoc.createdAt = serverTimestamp();
-        await addDoc(collection(db, 'blogPosts'), postDoc);
+        await addDoc(postsRef, postDoc);
         toast.success(`"${title}" published successfully.`);
       }
       closeForm();
@@ -162,6 +174,7 @@ export const ManageInsights: React.FC = () => {
   const handleToggleStatus = async (post: any) => {
     try {
       const docRef = doc(db, 'blogPosts', post.id);
+      // ফিক্স: status আপডেট করার জন্য setDoc ব্যবহার করা নিরাপদ
       await setDoc(docRef, { status: post.status === 'published' ? 'draft' : 'published', updatedAt: serverTimestamp() }, { merge: true });
       toast.success('Status updated.');
       loadPosts();
@@ -210,7 +223,8 @@ export const ManageInsights: React.FC = () => {
     setIsFormOpen(false);
   };
 
-  const filteredPosts = posts.filter(p => p.title.toLowerCase().includes(searchQuery.toLowerCase()) || p.category.toLowerCase().includes(searchQuery.toLowerCase()));
+  const quillModules = { toolbar: [ [{ 'header': [1, 2, 3, false] }], ['bold', 'italic', 'underline', 'blockquote'], [{'list': 'ordered'}, {'list': 'bullet'}], ['link', 'clean'] ], };
+  const filteredPosts = posts.filter(p => p.title.toLowerCase().includes(searchQuery.toLowerCase()) || p.category.toLowerCase().includes(searchQuery.toLowerCase()) );
 
   return (
     <>
